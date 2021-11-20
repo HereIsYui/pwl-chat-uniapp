@@ -27,6 +27,7 @@
 		methods: {
 			init() {
 				let apiKey = uni.getStorageSync('apiKey');
+				let data = uni.getStorageSync('userData');
 				// let apiKey = "dsajdlksjd==";
 
 				if (!apiKey) {
@@ -36,30 +37,12 @@
 					}, 100)
 				} else {
 					// 看看登录信息过期没有
-					UTIL.flirt({
-						url: APILIST.API.checkUser,
-						data: {
-							apiKey: apiKey
-						}
-					}).then(res => {
-						if (res.code == 0) {
-							// 没过期，继续用
-							getApp().globalData.data = res.data;
-							getApp().globalData.apiKey = apiKey;
-							uni.redirectTo({
-								url:'/pages/chat/chat'
-							})
-						} else {
-							// 你丫的登录信息过期了，快去登录
-							setTimeout(() => {
-								this.ShowLogin = true;
-							}, 100)
-						}
-					})
+					this.CheckUser(apiKey)
 				}
 
 			},
 			login() {
+				let that = this;
 				UTIL.flirt({
 					url: APILIST.API.getKey,
 					data: {
@@ -69,12 +52,8 @@
 					method: "POST"
 				}).then(res => {
 					if(res.code == 0){
-						// 没问题，滚去聊天室
-						getApp().globalData.data = res.Key;
-						uni.setStorageSync('apiKey',res.Key);
-						uni.redirectTo({
-							url:'/pages/chat/chat'
-						})
+						// 没问题，先验证下,再滚去聊天室
+						that.CheckUser(res.Key)
 					}else{
 						// 报错就是你的错
 						uni.showToast({
@@ -82,6 +61,30 @@
 							icon:'error',
 						    duration: 2000
 						});
+					}
+				})
+			},
+			CheckUser(apiKey){
+				UTIL.flirt({
+					url: APILIST.API.checkUser,
+					data: {
+						apiKey: apiKey
+					}
+				}).then(res => {
+					if (res.code == 0) {
+						// 没过期，继续用
+						uni.setStorageSync('userData',res.data)
+						uni.setStorageSync('apiKey',apiKey)
+						getApp().globalData.data = res.data;
+						getApp().globalData.apiKey = apiKey;
+						uni.reLaunch({
+							url:'/pages/chat/chat'
+						})
+					} else {
+						// 你丫的登录信息过期了，快去登录
+						setTimeout(() => {
+							this.ShowLogin = true;
+						}, 100)
 					}
 				})
 			}
