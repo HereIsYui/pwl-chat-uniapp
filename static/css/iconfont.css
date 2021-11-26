@@ -1,0 +1,26 @@
+@font-face {
+  font-family: "pwlfont"; /* Project id 2965464 */
+  src: url('https://at.alicdn.com/t/font_2965464_dunqnf4tuv6.woff2?t=1637912638023') format('woff2'),
+       url('https://at.alicdn.com/t/font_2965464_dunqnf4tuv6.woff?t=1637912638023') format('woff'),
+       url('https://at.alicdn.com/t/font_2965464_dunqnf4tuv6.ttf?t=1637912638023') format('truetype');
+}
+
+.pwlfont {
+  font-family: "pwlfont" !important;
+  font-size: 32px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.pwl-emoji:before {
+  content: "\e600";
+}
+
+.pwl-tupian:before {
+  content: "\e60c";
+}
+
+.pwl-hongbao:before {
+  content: "\e62a";
+}
