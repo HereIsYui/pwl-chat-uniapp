@@ -12,7 +12,7 @@
 <script>
 	import APILIST from '../../utils/api.js'
 	import UTIL from '../../utils/util.js'
-	import SparkMD5 from 'spark-md5'
+	import SparkMD5 from 'spark-md5' 
 	export default {
 		data() {
 			return {

@@ -65,7 +65,9 @@
 		<!-- 红包 -->
 		<view class="redPacketBg" v-if="showRedPacketData" @click.stop="showRedPacketData = false">
 			<view class="redPacketbox">
-				<view class="redPacketInfo"></view>
+				<view class="redPacketInfo">
+					
+				</view>
 				<view class="redPacketList">
 					
 				</view>
@@ -112,14 +114,14 @@
 			this.getPage(1);
 			// this.getUserEmotions();
 			let that = this;
-			uni.onSocketClose(function (res) {
-			  console.log('WebSocket 已关闭！');
-			  that.JoinChat = setInterval(()=>{
-				  console.log("尝试重连WebSocket");
-				  that.initChat()
-			  },3000)
+			// uni.onSocketClose(function (res) {
+			//   console.log('WebSocket 已关闭！');
+			//   that.JoinChat = setInterval(()=>{
+			// 	  console.log("尝试重连WebSocket");
+			// 	  that.initChat()
+			//   },3000)
 			  
-			});
+			// });
 			setInterval(()=>{
 				this.changeHuaji()
 			},5000)
@@ -257,7 +259,7 @@
 					});
 					this.content.push(msg)
 				} else {
-					this.content.push(msg)
+					this.content.push(msg)					
 				}
 				if(!msg.isMoney){
 					this.secondMsg = this.firstMsg;
