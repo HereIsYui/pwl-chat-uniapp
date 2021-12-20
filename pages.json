@@ -11,6 +11,12 @@
 			"style": {
 				"navigationBarTitleText": "摸鱼派-聊天室"
 			}
+		},
+		{
+			"path": "pages/chat/redpacket",
+			"style": {
+				"navigationBarTitleText": "发红包"
+			}
 		}
 	],
 	"globalStyle": {

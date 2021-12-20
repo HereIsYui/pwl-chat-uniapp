@@ -22,18 +22,15 @@
 									</view>
 								</view>
 							</view>
-							<view class="msgContent" v-else-if="item.userName == 'taozhiyu'" @click="hideTaotao = false">
-								<view v-if="hideTaotao">涛涛发言，自动屏蔽[点击解除]</view>
-								<view v-else>
-									<mp-html @load="scrollToBottom()" :content="item.content" />
-								</view>
-							</view>
 							<view class="msgContent" v-else>
-								<mp-html @load="scrollToBottom()" @ready="scrollToBottom()" :copy-link="false" :selectable="true" :content="item.content" />
+								<mp-html @load="scrollToBottom()" @ready="scrollToBottom()" :copy-link="false"
+									:selectable="true" :content="item.content" />
 							</view>
-							
+
 						</view>
-						<view class="humanNature" v-if="content.length > 2 && firstMsg.content == secondMsg.content && firstMsg.oId == item.oId && item.userName != data.userName"  @click="SendMsg(item.content)">+1</view>
+						<view class="humanNature"
+							v-if="content.length > 2 && firstMsg.content == secondMsg.content && firstMsg.oId == item.oId && item.userName != data.userName"
+							@click="SendMsg(item.content)">+1</view>
 					</view>
 					<image v-if="data.userName == item.userName" :src='item.userAvatarURL' mode="widthFix"
 						class="userAvatar"></image>
@@ -49,14 +46,14 @@
 		<!-- 发送栏 -->
 		<view class="sendBox">
 			<view class="menuBox">
-				<view class="iconBtn">
+				<view class="iconBtn" @click="toRedPacket">
 					<image src="../../static/icon/hongbao.png" mode="heightFix"></image>
 				</view>
 				<view class="iconBtn">
 					<image :src="emojeSrc" mode="heightFix"></image>
 				</view>
 				<view class="iconBtn">
-					<image src="../../static/icon/tupian.png" mode="heightFix"></image>			
+					<image src="../../static/icon/tupian.png" mode="heightFix"></image>
 				</view>
 			</view>
 			<textarea type="text" v-model="msg" class="chat-input" value="" placeholder="请输入" />
@@ -66,10 +63,10 @@
 		<view class="redPacketBg" v-if="showRedPacketData" @click.stop="showRedPacketData = false">
 			<view class="redPacketbox">
 				<view class="redPacketInfo">
-					
+
 				</view>
 				<view class="redPacketList">
-					
+
 				</view>
 			</view>
 		</view>
@@ -82,7 +79,7 @@
 	import UTIL from '../../utils/util.js'
 	export default {
 		components: {
-		 mpHtml
+			mpHtml
 		},
 		data() {
 			return {
@@ -90,19 +87,13 @@
 				apiKey: "",
 				data: {},
 				msg: "",
-				hideTaotao: true,
-				redpacket: {
-					money: 32,
-					count: 2,
-					msg: '摸鱼者，事竟成！'
-				},
-				firstMsg:null,
-				secondMsg:null,
-				emojeSrc:'../../static/icon/huaji1.png',
-				redpacketData:{},
-				redpacketTitle:"",
-				showRedPacketData:true,
-				JoinChat:null
+				firstMsg: null,
+				secondMsg: null,
+				emojeSrc: '../../static/icon/huaji1.png',
+				redpacketData: {},
+				redpacketTitle: "",
+				showRedPacketData: true,
+				JoinChat: null
 			}
 		},
 		onLoad() {
@@ -120,15 +111,21 @@
 			// 	  console.log("尝试重连WebSocket");
 			// 	  that.initChat()
 			//   },3000)
-			  
 			// });
-			setInterval(()=>{
+			setInterval(() => {
 				this.changeHuaji()
-			},5000)
+			}, 5000)
 		},
 		methods: {
-			changeHuaji(){
+			changeHuaji() {
 				this.emojeSrc = `../../static/icon/huaji${Math.ceil(Math.random()*6)}.png`
+			},
+			toRedPacket() {
+				uni.navigateTo({
+					url: './redpacket',
+					animationType: 'pop-in',
+					animationDuration: 200
+				})
 			},
 			getPage(page) {
 				let that = this;
@@ -172,10 +169,10 @@
 				}).then(res => {
 					this.redpacketData = res;
 					let money = this.redpacketData.who.find(w => w.userName == this.data.userName);
-					if (!money){
-						this.redpacketTitle =  '错过一个亿'
-					}else{
-						this.redpacketTitle =  money.userMoney == 0 ? '抢了个寂寞' : '抢到' + money.userMoney + '积分'
+					if (!money) {
+						this.redpacketTitle = '错过一个亿'
+					} else {
+						this.redpacketTitle = money.userMoney == 0 ? '抢了个寂寞' : '抢到' + money.userMoney + '积分'
 					}
 					this.showRedPacketData = true;
 				})
@@ -183,7 +180,7 @@
 			SendMsg(msg) {
 				let that = this;
 				let content = that.msg || msg;
-				if(content && content.trim() == "") {
+				if (content && content.trim() == "") {
 					return;
 				}
 				UTIL.flirt({
@@ -205,7 +202,7 @@
 						console.log("WebSocket 连接成功！")
 						clearInterval(that.JoinChat);
 					},
-					fail:(err) => {
+					fail: (err) => {
 						console.log("WebSocket 连接失败！")
 					}
 				});
@@ -234,7 +231,7 @@
 							break;
 						case "redPacketStatus":
 							that.content.push(msg);
-							if(msg.got == 2){
+							if (msg.got == 2) {
 								that.getMoney(msg.oId)
 							}
 							break;
@@ -259,13 +256,13 @@
 					});
 					this.content.push(msg)
 				} else {
-					this.content.push(msg)					
+					this.content.push(msg)
 				}
-				if(!msg.isMoney){
+				if (!msg.isMoney) {
 					this.secondMsg = this.firstMsg;
 					this.firstMsg = msg;
 				}
-				
+
 			},
 			isJSON(str) {
 				if (typeof str == 'string') {
@@ -289,12 +286,12 @@
 				query.selectViewport().scrollOffset()
 				query.exec(res => {
 					if (res[0]) {
-						setTimeout(()=>{
+						setTimeout(() => {
 							wx.pageScrollTo({
 								scrollTop: res[0].height + 0,
 								duration: 100
 							})
-						},100)
+						}, 100)
 					}
 				})
 			}
@@ -328,11 +325,13 @@
 	.msgInfo.isYou {
 		justify-content: flex-end;
 	}
-	.MsgDetailBox{
+
+	.MsgDetailBox {
 		display: flex;
 		justify-content: space-between;
 		align-items: flex-end;
 	}
+
 	.contentBox {
 		min-height: calc(100vh - 100px);
 		padding: 15px 10px 80px;
@@ -362,7 +361,7 @@
 		font-size: 12px;
 		color: #fff;
 	}
-	
+
 	.msgContent {
 		position: relative;
 		min-width: 10px;
@@ -418,19 +417,23 @@
 		height: 100px;
 		background: #fff;
 	}
-	.menuBox{
+
+	.menuBox {
 		display: flex;
 		height: 42px;
 		padding: 5px 0;
 		border-bottom: 1px solid #F8F8F8;
 		box-sizing: border-box;
 	}
-	.iconBtn{
+
+	.iconBtn {
 		margin: 0 5px;
 	}
-	.iconBtn image{
+
+	.iconBtn image {
 		height: 32px;
 	}
+
 	.sendBtn {
 		position: absolute;
 		right: 5vw;
@@ -510,7 +513,8 @@
 		font-size: 12px;
 		width: 100%;
 	}
-	.humanNature{
+
+	.humanNature {
 		width: 35px;
 		height: 35px;
 		margin-left: 5px;
@@ -522,7 +526,8 @@
 		border-radius: 50%;
 		transform: translateY(-50%);
 	}
-	.redPacketBg{
+
+	.redPacketBg {
 		position: fixed;
 		z-index: 250;
 		top: 0;
@@ -530,7 +535,8 @@
 		width: 100vw;
 		height: 100vh;
 	}
-	.redPacketbox{
+
+	.redPacketbox {
 		position: absolute;
 		top: 8vh;
 		left: 50%;
