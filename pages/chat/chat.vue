@@ -24,7 +24,7 @@
 							</view>
 							<view class="msgContent" v-else>
 								<mp-html @load="scrollToBottom()" @ready="scrollToBottom()" :copy-link="false"
-									:selectable="true" :content="item.content" />
+									:content="item.content" @langtap="showWindow" @linktap="showLink" />
 							</view>
 
 						</view>
@@ -45,19 +45,25 @@
 		</view>
 		<!-- 发送栏 -->
 		<view class="sendBox">
+			<textarea type="text" v-model="msg" class="chat-input" value="" placeholder="请输入" confirm-type="send"
+				:confirm-hold="true" @confirm="SendMsg()" />
 			<view class="menuBox">
-				<view class="iconBtn" @click="toRedPacket">
+				<view class="iconBtn" @click="toRedPacket()">
 					<image src="../../static/icon/hongbao.png" mode="heightFix"></image>
 				</view>
-				<view class="iconBtn">
+				<view class="iconBtn" @click="toggleFace()">
 					<image :src="emojeSrc" mode="heightFix"></image>
 				</view>
-				<view class="iconBtn">
+				<view class="iconBtn" @click="getImage()">
 					<image src="../../static/icon/tupian.png" mode="heightFix"></image>
 				</view>
 			</view>
-			<textarea type="text" v-model="msg" class="chat-input" value="" placeholder="请输入" />
-			<button type="default" class="sendBtn" @touchend.prevent="SendMsg()">发送</button>
+			<view class="faceBox" v-if="isShowFace">
+				<view class="face-item" v-for="(item,index) in face" :key="index">
+					<image class="face-item" :src="item.url" mode="aspectFill" @click="sendFace(item.preUrl)"></image>
+				</view>
+			</view>
+			<!-- <button type="default" class="sendBtn" @touchend.prevent="SendMsg()">发送</button> -->
 		</view>
 		<!-- 红包 -->
 		<view class="redPacketBg" v-if="showRedPacketData" @click.stop="showRedPacketData = false">
@@ -75,8 +81,15 @@
 
 <script>
 	import mpHtml from 'mp-html/dist/uni-app/components/mp-html/mp-html'
-	import APILIST from '../../utils/api.js'
-	import UTIL from '../../utils/util.js'
+	import {
+		upload,
+		getMorePage,
+		openRedPacket,
+		WS,
+		send,
+		faceList,
+		getUserInfo
+	} from '../../utils/api.js'
 	export default {
 		components: {
 			mpHtml
@@ -92,8 +105,11 @@
 				emojeSrc: '../../static/icon/huaji1.png',
 				redpacketData: {},
 				redpacketTitle: "",
-				showRedPacketData: true,
-				JoinChat: null
+				showRedPacketData: false,
+				JoinChat: null,
+				scrollPower: true,
+				isShowFace: false,
+				face: [],
 			}
 		},
 		onLoad() {
@@ -103,6 +119,7 @@
 		},
 		created() {
 			this.getPage(1);
+			this.getFaceList();
 			// this.getUserEmotions();
 			let that = this;
 			// uni.onSocketClose(function (res) {
@@ -122,23 +139,71 @@
 			},
 			toRedPacket() {
 				uni.navigateTo({
-					url: './redpacket',
+					url: './redpacket?apiKey=' + this.apiKey,
 					animationType: 'pop-in',
 					animationDuration: 200
 				})
+			},
+			showWindow(e) {
+				console.log(e)
+			},
+			getImage() {
+				let that = this;
+				uni.chooseImage({
+					count: 1, //默认9
+					sizeType: ['compressed'], //可以指定是原图还是压缩图，默认二者都有
+					success: function(res) {
+						console.log(res.tempFilePaths)
+						upload(res.tempFilePaths[0]).then(res=>{
+							console.log(res)
+						})
+					}
+				});
+
+			},
+			getFaceList() {
+				faceList({
+					gameId: 'emojis',
+					apiKey: this.apiKey
+				}).then(res => {
+					if (res.code == 0) {
+						let list = JSON.parse(res.data);
+						list.forEach(item => {
+							let items = encodeURI(item)
+							items = btoa(items);
+							this.face.push({
+								url: `https://pwl.yuis.cc/GetImage?url=${items}`,
+								preUrl: item
+							})
+						})
+					} else {
+						console.log("error")
+					}
+				})
+			},
+			sendFace(url) {
+				this.msg = this.msg + ` ![图片表情](${url})`;
+				this.isShowFace = false;
+			},
+			toggleFace() {
+				this.isShowFace = !this.isShowFace;
+			},
+			showLink(e) {
+				console.log(e)
+				if (e.class && e.class == "name-at") {
+					// getUserInfo(e["aria-label"]).then(res=>{
+					// 	console.log(res)
+					// })
+				}
 			},
 			getPage(page) {
 				let that = this;
 				if (page = 1) {
 					this.content = [];
 				}
-				UTIL.flirt({
-					url: APILIST.API.more,
-					method: "GET",
-					data: {
-						page: page,
-						apiKey: that.apiKey
-					}
+				getMorePage({
+					page: page,
+					apiKey: this.apiKey
 				}).then(res => {
 					if (res.code == 0) {
 						let info = res.data;
@@ -150,22 +215,17 @@
 							let userAvatar = encodeURI(msg.userAvatarURL)
 							userAvatar = btoa(userAvatar);
 							msg.userAvatarURL = `https://pwl.yuis.cc/GetImage?url=${userAvatar}`
-							// msg.userAvatarURL = `http://127.0.0.1:3002/GetImage?url=${userAvatar}`
-							that.filterMsg(msg)
+							this.filterMsg(msg)
 						})
-						that.scrollToBottom()
+						this.scrollToBottom()
 					}
 				})
 			},
 			getMoney(oId) {
 				let that = this;
-				UTIL.flirt({
-					url: APILIST.API.open,
-					method: "POST",
-					data: {
-						oId: oId,
-						apiKey: that.apiKey
-					}
+				openRedPacket({
+					oId: oId,
+					apiKey: that.apiKey
 				}).then(res => {
 					this.redpacketData = res;
 					let money = this.redpacketData.who.find(w => w.userName == this.data.userName);
@@ -183,13 +243,9 @@
 				if (content && content.trim() == "") {
 					return;
 				}
-				UTIL.flirt({
-					url: APILIST.API.send,
-					method: "POST",
-					data: {
-						content: content,
-						apiKey: that.apiKey
-					}
+				send({
+					content: content,
+					apiKey: that.apiKey
 				}).then(res => {
 					that.msg = "";
 				})
@@ -197,7 +253,7 @@
 			initChat() {
 				let that = this;
 				var socketTask = uni.connectSocket({
-					url: APILIST.WS.channel,
+					url: WS.channel,
 					success: (res) => {
 						console.log("WebSocket 连接成功！")
 						clearInterval(that.JoinChat);
@@ -210,6 +266,7 @@
 					let msg = JSON.parse(res.data)
 					switch (msg.type) {
 						case "online": //在线人数
+							uni.setStorageSync('users', JSON.stringify(msg.users))
 							uni.setNavigationBarTitle({
 								title: `摸鱼派-聊天室(${msg.onlineChatCnt})`
 							})
@@ -223,7 +280,6 @@
 							}
 							break;
 						case "msg": //消息
-							// let userAvatar = uni.getStorageSync(msg.userName);
 							let userAvatar = encodeURI(msg.userAvatarURL)
 							userAvatar = btoa(userAvatar);
 							msg.userAvatarURL = `https://pwl.yuis.cc/GetImage?url=${userAvatar}`
@@ -231,9 +287,6 @@
 							break;
 						case "redPacketStatus":
 							that.content.push(msg);
-							if (msg.got == 2) {
-								that.getMoney(msg.oId)
-							}
 							break;
 					}
 				})
@@ -251,7 +304,6 @@
 						let url = encodeURI(capture);
 						url = btoa(url);
 						let imgUrl = `https://pwl.yuis.cc/GetImage?url=${url}`;
-						// let imgUrl = `http://127.0.0.1:3002/GetImage?url=${imgurl}`;
 						return `<img src="${imgUrl}" alt="图片表情" />`
 					});
 					this.content.push(msg)
@@ -280,20 +332,21 @@
 				}
 			},
 			scrollToBottom: function() {
-				let query = wx.createSelectorQuery()
-				// 通过节点获取位置信息
-				query.select('.contentBox').boundingClientRect()
-				query.selectViewport().scrollOffset()
-				query.exec(res => {
-					if (res[0]) {
-						setTimeout(() => {
-							wx.pageScrollTo({
-								scrollTop: res[0].height + 0,
-								duration: 100
-							})
-						}, 100)
-					}
-				})
+				if (this.scrollPower) {
+					let query = wx.createSelectorQuery()
+					query.select('.contentBox').boundingClientRect()
+					query.selectViewport().scrollOffset()
+					query.exec(res => {
+						if (res[0]) {
+							setTimeout(() => {
+								wx.pageScrollTo({
+									scrollTop: res[0].height + 0,
+									duration: 100
+								})
+							}, 100)
+						}
+					})
+				}
 			}
 		},
 	}
@@ -333,7 +386,7 @@
 	}
 
 	.contentBox {
-		min-height: calc(100vh - 100px);
+		min-height: 100%;
 		padding: 15px 10px 80px;
 		box-sizing: border-box;
 	}
@@ -414,15 +467,17 @@
 		bottom: 0;
 		left: 0;
 		width: 100vw;
-		height: 100px;
+		min-height: 100px;
+		padding: 0 15px;
 		background: #fff;
+		box-sizing: border-box;
 	}
 
 	.menuBox {
 		display: flex;
 		height: 42px;
 		padding: 5px 0;
-		border-bottom: 1px solid #F8F8F8;
+		border-top: 1px solid #F8F8F8;
 		box-sizing: border-box;
 	}
 
@@ -434,24 +489,10 @@
 		height: 32px;
 	}
 
-	.sendBtn {
-		position: absolute;
-		right: 5vw;
-		top: calc(50% + 20px);
-		z-index: 10;
-		height: 30px;
-		line-height: 30px;
-		font-size: 14px;
-		transform: translateY(-50%);
-		background-color: #60b044;
-		color: #fff;
-	}
-
 	.chat-input {
 		width: 100%;
-		height: 100%;
+		height: calc(100% - 42px);
 		padding: 10px;
-		padding-right: 80px;
 		line-height: 30px;
 		box-sizing: border-box;
 	}
@@ -524,7 +565,7 @@
 		color: #000;
 		background: #fff;
 		border-radius: 50%;
-		transform: translateY(-50%);
+		transform: translateY(-20%);
 	}
 
 	.redPacketBg {
@@ -544,6 +585,22 @@
 		height: 70vh;
 		transform: translateX(-50%);
 		background: #fdf7eb;
+	}
+
+	.faceBox {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex-wrap: wrap;
+		width: 100%;
+		height: 200px;
+		overflow-y: scroll;
+	}
+
+	.face-item {
+		width: 50px;
+		height: 50px;
+		margin: 5px;
 	}
 </style>
 <style>
