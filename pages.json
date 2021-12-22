@@ -17,6 +17,12 @@
 			"style": {
 				"navigationBarTitleText": "发红包"
 			}
+		},
+		{
+			"path": "pages/chat/userInfo",
+			"style": {
+				"navigationBarTitleText": "详情"
+			}
 		}
 	],
 	"globalStyle": {

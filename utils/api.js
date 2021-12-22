@@ -65,6 +65,16 @@ export const faceList = params => {
 	})
 }
 
+export const deleteMsg = params => {
+	return UTIL.flirt({
+		url: API.delete + params.oId,
+		data:{
+			apiKey:params.apiKey
+		},
+		method: "DELETE"
+	})
+}
+
 export const getUserInfo = params => {
 	return UTIL.flirt({
 		url: API.getUserInfo + params,
@@ -79,7 +89,7 @@ export const upload = params => {
 			filePath: params,
 			name: 'file[]',
 			header:{
-				"Content-Type":"multipart/form-data"
+				"enctype":"multipart/form-data"
 			},
 			success: res => {
 				resolve(res)

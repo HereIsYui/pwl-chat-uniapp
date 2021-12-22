@@ -1,12 +1,12 @@
 <template>
 	<view class="content">
-		<view class="contentBox" v-if="content.length > 0">
+		<view class="contentBox" v-if="content.length > 0" @scroll="">
 			<view class="msgInfo" v-for="(item,index) in content" :key="index"
 				:class="{isYou : (data.userName == item.userName ? true : false)}">
 				<template v-if="item.type != 'redPacketStatus'">
 					<image v-if="data.userName != item.userName" :src='item.userAvatarURL' mode="widthFix"
-						class="userAvatar"></image>
-					<view class="MsgDetailBox">
+						class="userAvatar" @longpress="atThis(item.userName)" @click="toUser(item.userName)"></image>
+					<view class="MsgDetailBox" @longpress="longpress" :data-oid="item.oId" :data-msg="item.content" :data-username="item.userName">
 						<view class="msgBox">
 							<template v-if="data.userName != item.userName">
 								<view class="userName" v-if="item.userNickname">{{item.userNickname}}({{item.userName}})
@@ -18,13 +18,17 @@
 									<view class="rp-header"></view>
 									<view class="rp-main">
 										<view class="open">开</view>
-										<view class="rp-msg">{{item.content.msg}}</view>
+										<view class="rp-msg">
+											<view>{{item.content.msg}}</view>
+											<view style="font-weight: bold;">{{defaultTitle[item.content.type]}}</view>
+										</view>
 									</view>
 								</view>
 							</view>
 							<view class="msgContent" v-else>
-								<mp-html @load="scrollToBottom()" @ready="scrollToBottom()" :copy-link="false"
-									:content="item.content" @langtap="showWindow" @linktap="showLink" />
+								<mp-html @load="scrollToBottom()" container-style="MessageBox" @ready="scrollToBottom()"
+									:copy-link="false" :content="item.content" :show-img-menu="false"
+									@linktap="showLink" />
 							</view>
 
 						</view>
@@ -45,8 +49,8 @@
 		</view>
 		<!-- 发送栏 -->
 		<view class="sendBox">
-			<textarea type="text" v-model="msg" class="chat-input" value="" placeholder="请输入" confirm-type="send"
-				:confirm-hold="true" @confirm="SendMsg()" />
+			<textarea type="text" v-model="msg" class="chat-input" :focus="isSend" @focus="onInputFocus()" @blur="noSend()" value=""
+				placeholder="请输入" confirm-type="send" :confirm-hold="true" @confirm="SendMsg()" />
 			<view class="menuBox">
 				<view class="iconBtn" @click="toRedPacket()">
 					<image src="../../static/icon/hongbao.png" mode="heightFix"></image>
@@ -58,21 +62,47 @@
 					<image src="../../static/icon/tupian.png" mode="heightFix"></image>
 				</view>
 			</view>
-			<view class="faceBox" v-if="isShowFace">
+			<view class="faceBox" v-show="isShowFace">
 				<view class="face-item" v-for="(item,index) in face" :key="index">
 					<image class="face-item" :src="item.url" mode="aspectFill" @click="sendFace(item.preUrl)"></image>
 				</view>
 			</view>
 			<!-- <button type="default" class="sendBtn" @touchend.prevent="SendMsg()">发送</button> -->
 		</view>
+		<!-- 右键菜单 -->
+		<view class="longTap-list" :style="{top:clientY + 'px',left:clientX + 'px'}">
+			<view class="longTap-item" @click="longTapEvent(0)">复读机</view>
+			<view class="longTap-item"  @click="longTapEvent(1)"
+				v-if="data.userRole =='协警' ||data.userRole =='OP' || data.userRole =='管理员'">撤回</view>
+			<view class="longTap-item"  @click="longTapEvent(1)" v-else-if="data.userName == item.userName">撤回</view>
+			<view class="longTap-item" @click="longTapEvent(2)">引用</view>
+		</view>
 		<!-- 红包 -->
-		<view class="redPacketBg" v-if="showRedPacketData" @click.stop="showRedPacketData = false">
+		<view class="redPacketBg" v-show="showRedPacketData" @click.stop="showRedPacketData = false">
 			<view class="redPacketbox">
 				<view class="redPacketInfo">
-
+					<view class="rpi-user">
+						<image class="rpi-user-img" :src="redpacketData.info.userAvatarURL" mode="aspectFill"></image>
+						{{redpacketData.info.userName}}'s的红包
+					</view>
+					<view class="rpi-recivers" v-if="redpacketData.recivers && redpacketData.recivers.length > 0">
+						这个红包属于：{{redpacketData.recivers.join(",")}}</view>
+					<view class="rpi-recivers" v-else>{{redpacketData.info.msg}}</view>
+					<view class="rpi-msg">{{redpacketData.msg}}</view>
+					<view class="rpi-count">总计：{{redpacketData.info.got}}/{{redpacketData.info.count}}</view>
 				</view>
 				<view class="redPacketList">
-
+					<view class="rpl-item" v-for="(item,index) in redpacketData.who" :key="index">
+						<image class="rpl-img" :src="item.avatar" mode="aspectFill"></image>
+						<view class="rpl-info">
+							<view class="rpl-name">{{item.userName}}</view>
+							<view class="rpl-tag isMax" v-if="item.isMax">来自老王的认可</view>
+							<view class="rpl-tag is0" v-if="item.is0">0溢事件</view>
+							<view class="rpl-tag isNeg" v-if="item.isNeg">抢红包有风险</view>
+							<view class="rpl-time">{{item.time}}</view>
+						</view>
+						<view class="rpl-money">{{item.userMoney}} 积分</view>
+					</view>
 				</view>
 			</view>
 		</view>
@@ -88,7 +118,8 @@
 		WS,
 		send,
 		faceList,
-		getUserInfo
+		getUserInfo,
+		deleteMsg
 	} from '../../utils/api.js'
 	export default {
 		components: {
@@ -103,37 +134,112 @@
 				firstMsg: null,
 				secondMsg: null,
 				emojeSrc: '../../static/icon/huaji1.png',
-				redpacketData: {},
+				redpacketData: {
+					"recivers": ["Yui"],
+					"who": [],
+					"info": {
+						"msg": "试试看，这是给你的红包吗？",
+						"userAvatarURL": "",
+						"count": 1,
+						"userName": "Yui",
+						"got": 0
+					}
+				},
 				redpacketTitle: "",
 				showRedPacketData: false,
 				JoinChat: null,
 				scrollPower: true,
 				isShowFace: false,
 				face: [],
+				isSend: false,
+				defaultTitle: {
+					random: "拼手气红包",
+					average: "普通红包",
+					specify: "专属红包",
+					heartbeat: "心跳红包"
+				},
+				clientY:0,
+				clientX:0,
+				longData:{
+					msg:"",
+					oId:"",
+					userName:"",
+				},
+				scrollTimeout:null
 			}
+		},
+		onPageScroll(e) {
+			// 传入scrollTop值并触发所有easy-loadimage组件下的滚动监听事件
+			// this.scrollTop = e.scrollTop;
+			this.scrollPower = false;
+			this.clientY = -999;
+			clearTimeout(this.scrollTimeout);
+			this.scrollTimeout = setTimeout(()=>{
+				this.scrollPower = true;
+			},1000)
 		},
 		onLoad() {
 			this.initChat();
 			this.apiKey = getApp().globalData.apiKey;
 			this.data = getApp().globalData.data || uni.getStorageSync('userData');
+			console.log(this.data)
 		},
 		created() {
 			this.getPage(1);
 			this.getFaceList();
 			// this.getUserEmotions();
 			let that = this;
-			// uni.onSocketClose(function (res) {
-			//   console.log('WebSocket 已关闭！');
-			//   that.JoinChat = setInterval(()=>{
-			// 	  console.log("尝试重连WebSocket");
-			// 	  that.initChat()
-			//   },3000)
-			// });
+			uni.onSocketClose(function(res) {
+				console.log('WebSocket 已关闭！');
+				that.JoinChat = setInterval(() => {
+					console.log("尝试重连WebSocket");
+					that.initChat()
+				}, 30000)
+			});
 			setInterval(() => {
 				this.changeHuaji()
 			}, 5000)
 		},
 		methods: {
+			deleteMessage(oId){
+				deleteMsg({
+					oId:oId,
+					apiKey:this.apiKey
+				}).then(res=>{
+					console.log(res)
+				})
+			},
+			longTapEvent(index){
+				if(index == 0){
+					this.SendMsg(this.longData.msg)
+				}else if(index == 1){
+					this.deleteMessage(this.longData.oId)
+				}else{
+					this.msg = `##### 引用 @${this.longData.userName} \n  > ${this.longData.msg} \n\n` + this.msg;
+					this.isSend = true;
+				}
+			},
+			longpress(e) {
+				console.log(e)
+				this.clientY = e.changedTouches[0].clientY - 50;
+				this.clientX = e.changedTouches[0].clientX - 50;
+				this.longData.msg = e.currentTarget.dataset.msg;
+				this.longData.oId = e.currentTarget.dataset.oid;
+				this.longData.userName = e.currentTarget.dataset.username;
+				console.log(this.longData)
+			},
+			atThis(user) {
+				this.msg = `@${user} :` + this.msg;
+				setTimeout(() => {
+					this.isSend = true;
+				}, 100)
+			},
+			noSend() {
+				this.isSend = false;
+			},
+			onInputFocus(){
+				this.clientY = -999;
+			},
 			changeHuaji() {
 				this.emojeSrc = `../../static/icon/huaji${Math.ceil(Math.random()*6)}.png`
 			},
@@ -144,18 +250,22 @@
 					animationDuration: 200
 				})
 			},
-			showWindow(e) {
-				console.log(e)
-			},
 			getImage() {
 				let that = this;
 				uni.chooseImage({
 					count: 1, //默认9
 					sizeType: ['compressed'], //可以指定是原图还是压缩图，默认二者都有
 					success: function(res) {
-						console.log(res.tempFilePaths)
-						upload(res.tempFilePaths[0]).then(res=>{
-							console.log(res)
+						upload(res.tempFilePaths[0]).then(result => {
+							if (result.statusCode == 200) {
+								let urlList = JSON.parse(result.data);
+								urlList = urlList.data.succMap;
+								console.log(urlList)
+								for (let key in urlList) {
+									that.msg = that.msg + ` ![图片表情](${urlList[key]})`
+								}
+								that.isSend = true;
+							}
 						})
 					}
 				});
@@ -171,10 +281,18 @@
 						list.forEach(item => {
 							let items = encodeURI(item)
 							items = btoa(items);
+							// #ifdef H5
 							this.face.push({
 								url: `https://pwl.yuis.cc/GetImage?url=${items}`,
 								preUrl: item
 							})
+							// #endif
+							// #ifdef APP
+							this.face.push({
+								url: items,
+								preUrl: item
+							})
+							// #endif
 						})
 					} else {
 						console.log("error")
@@ -184,6 +302,7 @@
 			sendFace(url) {
 				this.msg = this.msg + ` ![图片表情](${url})`;
 				this.isShowFace = false;
+				this.isSend = true;
 			},
 			toggleFace() {
 				this.isShowFace = !this.isShowFace;
@@ -191,14 +310,19 @@
 			showLink(e) {
 				console.log(e)
 				if (e.class && e.class == "name-at") {
-					// getUserInfo(e["aria-label"]).then(res=>{
-					// 	console.log(res)
-					// })
+					this.toUser(e["aria-label"])
 				}
+			},
+			toUser(userName) {
+				uni.navigateTo({
+					url: "./userInfo?user=" + userName,
+					animationType: 'pop-in',
+					animationDuration: 200
+				})
 			},
 			getPage(page) {
 				let that = this;
-				if (page = 1) {
+				if (page == 1) {
 					this.content = [];
 				}
 				getMorePage({
@@ -212,9 +336,11 @@
 							info2.unshift(msg)
 						})
 						info2.forEach(msg => {
+							// #ifdef H5
 							let userAvatar = encodeURI(msg.userAvatarURL)
 							userAvatar = btoa(userAvatar);
 							msg.userAvatarURL = `https://pwl.yuis.cc/GetImage?url=${userAvatar}`
+							// #endif
 							this.filterMsg(msg)
 						})
 						this.scrollToBottom()
@@ -227,13 +353,44 @@
 					oId: oId,
 					apiKey: that.apiKey
 				}).then(res => {
+					console.log(res)
 					this.redpacketData = res;
+
 					let money = this.redpacketData.who.find(w => w.userName == this.data.userName);
-					if (!money) {
-						this.redpacketTitle = '错过一个亿'
+
+					let specify = (this.redpacketData.recivers && this.redpacketData.recivers.length && this
+						.redpacketData.recivers.indexOf(this.data.userName) >= 0)
+					let msg = "";
+					if (this.redpacketData.recivers && this.redpacketData.recivers.length && !specify) {
+						msg = "会错意了"
+					} else if (!money) {
+						msg = "错过一个亿";
 					} else {
-						this.redpacketTitle = money.userMoney == 0 ? '抢了个寂寞' : '抢到' + money.userMoney + '积分'
+						msg =
+							money.userMoney == 0 ?
+							"抢了个寂寞" :
+							`${money.userMoney} 积分`;
 					}
+					let moneyList = this.redpacketData.who;
+					let max = 0;
+					let maxIndex = 0;
+					moneyList.forEach((item, index) => {
+						if (item.userMoney >= max) {
+							max = item.userMoney;
+							maxIndex = index;
+						}
+						if (item.userMoney == 0) {
+							moneyList[index].is0 = true;
+						}
+						if (item.userMoney < 0) {
+							moneyList[index].isNeg = true;
+						}
+					})
+					if (this.redpacketData.info.got == this.redpacketData.info.count) {
+						moneyList[maxIndex].isMax = true;
+					}
+					this.redpacketData.who = moneyList;
+					this.redpacketData.msg = msg;
 					this.showRedPacketData = true;
 				})
 			},
@@ -267,9 +424,9 @@
 					switch (msg.type) {
 						case "online": //在线人数
 							uni.setStorageSync('users', JSON.stringify(msg.users))
-							uni.setNavigationBarTitle({
-								title: `摸鱼派-聊天室(${msg.onlineChatCnt})`
-							})
+							// uni.setNavigationBarTitle({
+							// 	title: `摸鱼派-聊天室(${msg.onlineChatCnt})`
+							// })
 							break;
 						case "revoke": //撤回
 							for (let i = 0; i < that.content.length; i++) {
@@ -280,10 +437,15 @@
 							}
 							break;
 						case "msg": //消息
+							// #ifdef H5
 							let userAvatar = encodeURI(msg.userAvatarURL)
 							userAvatar = btoa(userAvatar);
 							msg.userAvatarURL = `https://pwl.yuis.cc/GetImage?url=${userAvatar}`
+							// #endif
 							that.filterMsg(msg)
+							if (that.content.length > 500) {
+								that.getPage(1)
+							}
 							break;
 						case "redPacketStatus":
 							that.content.push(msg);
@@ -298,7 +460,9 @@
 					msg.isMoney = true;
 					this.content.push(msg)
 					this.scrollToBottom()
+
 				} else if (/<img [^>]*src=['"]([^'"]+)[^>]*>/gi.test(msg.content)) {
+					// #ifdef H5
 					let newSrcList = [];
 					msg.content = msg.content.replace(/<img [^>]*src=['"]([^'"]+)[^>]*>/gi, function(match, capture) {
 						let url = encodeURI(capture);
@@ -306,6 +470,7 @@
 						let imgUrl = `https://pwl.yuis.cc/GetImage?url=${url}`;
 						return `<img src="${imgUrl}" alt="图片表情" />`
 					});
+					// #endif
 					this.content.push(msg)
 				} else {
 					this.content.push(msg)
@@ -583,8 +748,119 @@
 		left: 50%;
 		width: 80vw;
 		height: 70vh;
+		box-sizing: border-box;
 		transform: translateX(-50%);
 		background: #fdf7eb;
+	}
+
+	.redPacketInfo {
+		width: 100%;
+		height: 130px;
+		text-align: center;
+		background: #f94151;
+		padding: 15px;
+		box-sizing: border-box;
+	}
+
+	.rpi-user {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		font-size: 14px;
+	}
+
+	.rpi-user-img {
+		width: 20px;
+		height: 20px;
+		margin-right: 5px;
+	}
+
+	.rpi-recivers {
+		font-size: 14px;
+	}
+
+	.rpi-msg {
+		font-size: 24px;
+	}
+
+	.rpi-count {
+		font-size: 12px;
+	}
+
+	.redPacketList {
+		width: 100%;
+		height: calc(100% - 130px);
+		overflow-y: scroll;
+		overflow-x: hidden;
+		padding: 15px;
+		box-sizing: border-box;
+	}
+
+	.rpl-item {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin: 5px 0;
+		padding: 5px;
+		background: #fff;
+	}
+
+	.rpl-item:not(:last-child) {
+		border-bottom: 1px dotted #999;
+	}
+
+	.rpl-img {
+		width: 38px;
+		height: 38px;
+		border-radius: 5px;
+	}
+
+	.rpl-time {
+		font-size: 12px;
+		color: rgba(0, 0, 0, 0.38);
+	}
+
+	.rpl-info {
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-start;
+		width: 65%;
+		text-align: left;
+		margin-left: 5px;
+	}
+
+	.rpl-tag {
+		display: inline-block;
+		padding: 0 5px;
+		line-height: 20px;
+		height: 20px;
+		max-width: 95px;
+		text-align: center;
+		font-size: 12px;
+		border-radius: 5px;
+		border: 1px solid #fff;
+	}
+
+	.isMax {
+		background-color: #60b044;
+		border-color: #5ca941;
+		color: #fff;
+	}
+
+	.is0 {
+		border-color: #D5D5D5;
+		color: #faa;
+	}
+
+	.isNeg {
+		border-color: #D5D5D5;
+		color: #000;
+	}
+
+	.rpl-money {
+		width: 25%;
+		font-size: 12px;
+		text-align: right;
 	}
 
 	.faceBox {
@@ -601,6 +877,28 @@
 		width: 50px;
 		height: 50px;
 		margin: 5px;
+	}
+
+	.longTap-list {
+		position: fixed;
+		left: 50%;
+		top: -25vw;
+		z-index: 100;
+		display: flex;
+		padding: 10px;
+		min-width: 100px;
+		height: 20px;
+		font-size: 12px;
+		background: #fff;
+		box-shadow: 0 2px 2px #6c6c6c;
+		border-top-right-radius: 10px;
+		border-bottom-left-radius: 10px;
+	}
+
+	.longTap-item {
+		margin: 0 5px;
+		height: 20px;
+		line-height: 20px;
 	}
 </style>
 <style>
