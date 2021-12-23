@@ -2,8 +2,8 @@
     "name" : "PWL",
     "appid" : "__UNI__C1F4B2F",
     "description" : "摸鱼派聊天室",
-    "versionName" : "0.0.1",
-    "versionCode" : "100",
+    "versionName" : "0.0.2",
+    "versionCode" : 101,
     "transformPx" : false,
     /* 5+App特有相关 */
     "app-plus" : {
@@ -38,7 +38,8 @@
                     "<uses-permission android:name=\"android.permission.FLASHLIGHT\"/>",
                     "<uses-feature android:name=\"android.hardware.camera\"/>",
                     "<uses-permission android:name=\"android.permission.WRITE_SETTINGS\"/>"
-                ]
+                ],
+                "abiFilters" : [ "armeabi-v7a", "arm64-v8a" ]
             },
             /* ios打包配置 */
             "ios" : {},

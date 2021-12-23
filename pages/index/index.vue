@@ -49,6 +49,7 @@
 					userPassword: SparkMD5.hash(this.userPassword)
 				}).then(res => {
 					if (res.code == 0) {
+						console.log(res)
 						// 没问题，先验证下,再滚去聊天室
 						that.CheckUser(res.Key)
 					} else {

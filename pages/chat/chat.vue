@@ -1,12 +1,13 @@
 <template>
 	<view class="content">
-		<view class="contentBox" v-if="content.length > 0" @scroll="">
+		<view class="contentBox" v-if="content.length > 0">
 			<view class="msgInfo" v-for="(item,index) in content" :key="index"
 				:class="{isYou : (data.userName == item.userName ? true : false)}">
 				<template v-if="item.type != 'redPacketStatus'">
 					<image v-if="data.userName != item.userName" :src='item.userAvatarURL' mode="widthFix"
 						class="userAvatar" @longpress="atThis(item.userName)" @click="toUser(item.userName)"></image>
-					<view class="MsgDetailBox" @longpress="longpress" :data-oid="item.oId" :data-msg="item.content" :data-username="item.userName">
+					<view class="MsgDetailBox" @longpress="longpress" :data-oid="item.oId" :data-msg="item.content"
+						:data-username="item.userName">
 						<view class="msgBox">
 							<template v-if="data.userName != item.userName">
 								<view class="userName" v-if="item.userNickname">{{item.userNickname}}({{item.userName}})
@@ -26,9 +27,8 @@
 								</view>
 							</view>
 							<view class="msgContent" v-else>
-								<mp-html @load="scrollToBottom()" container-style="MessageBox" @ready="scrollToBottom()"
-									:copy-link="false" :content="item.content" :show-img-menu="false"
-									@linktap="showLink" />
+								<!-- <mp-html @load="scrollToBottom()" container-style="MessageBox" @ready="scrollToBottom()" :copy-link="false" :content="item.content" :show-img-menu="false" @linktap="showLink" /> -->
+									<view v-html="item.content"></view>
 							</view>
 
 						</view>
@@ -49,8 +49,10 @@
 		</view>
 		<!-- 发送栏 -->
 		<view class="sendBox">
-			<textarea type="text" v-model="msg" class="chat-input" :focus="isSend" @focus="onInputFocus()" @blur="noSend()" value=""
-				placeholder="请输入" confirm-type="send" :confirm-hold="true" @confirm="SendMsg()" />
+			<!-- 保留参数 等uniapp更新 -->
+			<!-- confirm-type="send" confirm-hold="true" @confirm="SendMsg()"  -->
+			<textarea type="text" v-model="msg" class="chat-input" :focus="isSend" @focus="onInputFocus()"
+				@blur="noSend()" value="" placeholder="请输入" />
 			<view class="menuBox">
 				<view class="iconBtn" @click="toRedPacket()">
 					<image src="../../static/icon/hongbao.png" mode="heightFix"></image>
@@ -64,17 +66,17 @@
 			</view>
 			<view class="faceBox" v-show="isShowFace">
 				<view class="face-item" v-for="(item,index) in face" :key="index">
-					<image class="face-item" :src="item.url" mode="aspectFill" @click="sendFace(item.preUrl)"></image>
+					<image class="face-item" :src="item.url" mode="aspectFit" @click="sendFace(item.preUrl)"></image>
 				</view>
 			</view>
-			<!-- <button type="default" class="sendBtn" @touchend.prevent="SendMsg()">发送</button> -->
+			<button type="default" class="sendBtn" @touchend.prevent="SendMsg()">发送</button>
 		</view>
 		<!-- 右键菜单 -->
 		<view class="longTap-list" :style="{top:clientY + 'px',left:clientX + 'px'}">
 			<view class="longTap-item" @click="longTapEvent(0)">复读机</view>
-			<view class="longTap-item"  @click="longTapEvent(1)"
+			<view class="longTap-item" @click="longTapEvent(1)"
 				v-if="data.userRole =='协警' ||data.userRole =='OP' || data.userRole =='管理员'">撤回</view>
-			<view class="longTap-item"  @click="longTapEvent(1)" v-else-if="data.userName == item.userName">撤回</view>
+			<view class="longTap-item" @click="longTapEvent(1)" v-else-if="data.userName == item.userName">撤回</view>
 			<view class="longTap-item" @click="longTapEvent(2)">引用</view>
 		</view>
 		<!-- 红包 -->
@@ -158,14 +160,14 @@
 					specify: "专属红包",
 					heartbeat: "心跳红包"
 				},
-				clientY:0,
-				clientX:0,
-				longData:{
-					msg:"",
-					oId:"",
-					userName:"",
+				clientY: -999,
+				clientX: 0,
+				longData: {
+					msg: "",
+					oId: "",
+					userName: "",
 				},
-				scrollTimeout:null
+				scrollTimeout: null
 			}
 		},
 		onPageScroll(e) {
@@ -173,10 +175,14 @@
 			// this.scrollTop = e.scrollTop;
 			this.scrollPower = false;
 			this.clientY = -999;
+			if(e.scrollTop < 50){
+				console.log("loadPage~~")
+			}
+			this.isShowFace = false;
 			clearTimeout(this.scrollTimeout);
-			this.scrollTimeout = setTimeout(()=>{
+			this.scrollTimeout = setTimeout(() => {
 				this.scrollPower = true;
-			},1000)
+			}, 1000)
 		},
 		onLoad() {
 			this.initChat();
@@ -201,32 +207,31 @@
 			}, 5000)
 		},
 		methods: {
-			deleteMessage(oId){
+			deleteMessage(oId) {
 				deleteMsg({
-					oId:oId,
-					apiKey:this.apiKey
-				}).then(res=>{
+					oId: oId,
+					apiKey: this.apiKey
+				}).then(res => {
 					console.log(res)
 				})
 			},
-			longTapEvent(index){
-				if(index == 0){
+			longTapEvent(index) {
+				this.clientY = -999;
+				if (index == 0) {
 					this.SendMsg(this.longData.msg)
-				}else if(index == 1){
+				} else if (index == 1) {
 					this.deleteMessage(this.longData.oId)
-				}else{
+				} else {
 					this.msg = `##### 引用 @${this.longData.userName} \n  > ${this.longData.msg} \n\n` + this.msg;
 					this.isSend = true;
 				}
 			},
 			longpress(e) {
-				console.log(e)
 				this.clientY = e.changedTouches[0].clientY - 50;
 				this.clientX = e.changedTouches[0].clientX - 50;
 				this.longData.msg = e.currentTarget.dataset.msg;
 				this.longData.oId = e.currentTarget.dataset.oid;
 				this.longData.userName = e.currentTarget.dataset.username;
-				console.log(this.longData)
 			},
 			atThis(user) {
 				this.msg = `@${user} :` + this.msg;
@@ -236,8 +241,9 @@
 			},
 			noSend() {
 				this.isSend = false;
+				this.isShowFace = false;
 			},
-			onInputFocus(){
+			onInputFocus() {
 				this.clientY = -999;
 			},
 			changeHuaji() {
@@ -260,7 +266,7 @@
 							if (result.statusCode == 200) {
 								let urlList = JSON.parse(result.data);
 								urlList = urlList.data.succMap;
-								console.log(urlList)
+								// console.log(urlList)
 								for (let key in urlList) {
 									that.msg = that.msg + ` ![图片表情](${urlList[key]})`
 								}
@@ -287,15 +293,16 @@
 								preUrl: item
 							})
 							// #endif
-							// #ifdef APP
+							// #ifdef APP-PLUS
 							this.face.push({
-								url: items,
+								url: `https://pwl.yuis.cc/GetImage?url=${items}`,
 								preUrl: item
 							})
 							// #endif
 						})
 					} else {
-						console.log("error")
+						console.log("===:error:===")
+						console.log(res)
 					}
 				})
 			},
@@ -308,7 +315,6 @@
 				this.isShowFace = !this.isShowFace;
 			},
 			showLink(e) {
-				console.log(e)
 				if (e.class && e.class == "name-at") {
 					this.toUser(e["aria-label"])
 				}
@@ -331,11 +337,8 @@
 				}).then(res => {
 					if (res.code == 0) {
 						let info = res.data;
-						let info2 = [];
+						info.reverse();
 						info.forEach(msg => {
-							info2.unshift(msg)
-						})
-						info2.forEach(msg => {
 							// #ifdef H5
 							let userAvatar = encodeURI(msg.userAvatarURL)
 							userAvatar = btoa(userAvatar);
@@ -397,9 +400,11 @@
 			SendMsg(msg) {
 				let that = this;
 				let content = that.msg || msg;
+				this.isShowFace = false;
 				if (content && content.trim() == "") {
 					return;
 				}
+
 				send({
 					content: content,
 					apiKey: that.apiKey
@@ -472,8 +477,10 @@
 					});
 					// #endif
 					this.content.push(msg)
+					this.scrollToBottom()
 				} else {
 					this.content.push(msg)
+					this.scrollToBottom()
 				}
 				if (!msg.isMoney) {
 					this.secondMsg = this.firstMsg;
@@ -505,7 +512,7 @@
 						if (res[0]) {
 							setTimeout(() => {
 								wx.pageScrollTo({
-									scrollTop: res[0].height + 0,
+									scrollTop: res[0].height,
 									duration: 100
 								})
 							}, 100)
@@ -646,6 +653,18 @@
 		box-sizing: border-box;
 	}
 
+	.sendBtn {
+		position: absolute;
+		right: 5vw;
+		top: 10px;
+		z-index: 10;
+		height: 30px;
+		line-height: 30px;
+		font-size: 14px;
+		background-color: #60b044;
+		color: #fff;
+	}
+
 	.iconBtn {
 		margin: 0 5px;
 	}
@@ -726,7 +745,8 @@
 		margin-left: 5px;
 		text-align: center;
 		line-height: 35px;
-		font-size: 10px;
+		font-size: 12px;
+		font-weight: bold;
 		color: #000;
 		background: #fff;
 		border-radius: 50%;
@@ -865,7 +885,7 @@
 
 	.faceBox {
 		display: flex;
-		justify-content: space-between;
+		justify-content: flex-start;
 		align-items: center;
 		flex-wrap: wrap;
 		width: 100%;
@@ -874,8 +894,10 @@
 	}
 
 	.face-item {
-		width: 50px;
-		height: 50px;
+		min-width: 50px;
+		max-width: 50px;
+		min-height: 50px;
+		max-height: 50px;
 		margin: 5px;
 	}
 

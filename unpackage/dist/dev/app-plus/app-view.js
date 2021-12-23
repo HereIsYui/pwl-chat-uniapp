@@ -1002,15 +1002,7 @@ var render = function() {
       _vm._$g(1, "i")
         ? _c(
             "v-uni-view",
-            {
-              staticClass: _vm._$g(1, "sc"),
-              attrs: { _i: 1 },
-              on: {
-                scroll: function($event) {
-                  return _vm.$handleViewEvent($event)
-                }
-              }
-            },
+            { staticClass: _vm._$g(1, "sc"), attrs: { _i: 1 } },
             [
               _vm._l(_vm._$g(2, "f"), function(item, index, $20, $30) {
                 return _c(
@@ -1349,8 +1341,6 @@ var render = function() {
               focus: _vm._$g(27, "a-focus"),
               value: "",
               placeholder: "请输入",
-              "confirm-type": "send",
-              "confirm-hold": true,
               _i: 27
             },
             on: {
@@ -1358,9 +1348,6 @@ var render = function() {
                 return _vm.$handleViewEvent($event)
               },
               blur: function($event) {
-                return _vm.$handleViewEvent($event)
-              },
-              confirm: function($event) {
                 return _vm.$handleViewEvent($event)
               }
             },
@@ -1472,7 +1459,7 @@ var render = function() {
                     staticClass: _vm._$g("37-" + $31, "sc"),
                     attrs: {
                       src: _vm._$g("37-" + $31, "a-src"),
-                      mode: "aspectFill",
+                      mode: "aspectFit",
                       _i: "37-" + $31
                     },
                     on: {
@@ -1486,6 +1473,19 @@ var render = function() {
               )
             }),
             1
+          ),
+          _c(
+            "v-uni-button",
+            {
+              staticClass: _vm._$g(38, "sc"),
+              attrs: { type: "default", _i: 38 },
+              on: {
+                touchend: function($event) {
+                  return _vm.$handleViewEvent($event, { prevent: true })
+                }
+              }
+            },
+            [_vm._v("发送")]
           )
         ],
         1
@@ -1493,16 +1493,16 @@ var render = function() {
       _c(
         "v-uni-view",
         {
-          staticClass: _vm._$g(38, "sc"),
-          style: _vm._$g(38, "s"),
-          attrs: { _i: 38 }
+          staticClass: _vm._$g(39, "sc"),
+          style: _vm._$g(39, "s"),
+          attrs: { _i: 39 }
         },
         [
           _c(
             "v-uni-view",
             {
-              staticClass: _vm._$g(39, "sc"),
-              attrs: { _i: 39 },
+              staticClass: _vm._$g(40, "sc"),
+              attrs: { _i: 40 },
               on: {
                 click: function($event) {
                   return _vm.$handleViewEvent($event)
@@ -1511,21 +1511,7 @@ var render = function() {
             },
             [_vm._v("复读机")]
           ),
-          _vm._$g(40, "i")
-            ? _c(
-                "v-uni-view",
-                {
-                  staticClass: _vm._$g(40, "sc"),
-                  attrs: { _i: 40 },
-                  on: {
-                    click: function($event) {
-                      return _vm.$handleViewEvent($event)
-                    }
-                  }
-                },
-                [_vm._v("撤回")]
-              )
-            : _vm._$g(41, "e")
+          _vm._$g(41, "i")
             ? _c(
                 "v-uni-view",
                 {
@@ -1539,12 +1525,26 @@ var render = function() {
                 },
                 [_vm._v("撤回")]
               )
+            : _vm._$g(42, "e")
+            ? _c(
+                "v-uni-view",
+                {
+                  staticClass: _vm._$g(42, "sc"),
+                  attrs: { _i: 42 },
+                  on: {
+                    click: function($event) {
+                      return _vm.$handleViewEvent($event)
+                    }
+                  }
+                },
+                [_vm._v("撤回")]
+              )
             : _vm._e(),
           _c(
             "v-uni-view",
             {
-              staticClass: _vm._$g(42, "sc"),
-              attrs: { _i: 42 },
+              staticClass: _vm._$g(43, "sc"),
+              attrs: { _i: 43 },
               on: {
                 click: function($event) {
                   return _vm.$handleViewEvent($event)
@@ -1563,12 +1563,12 @@ var render = function() {
             {
               name: "show",
               rawName: "v-show",
-              value: _vm._$g(43, "v-show"),
-              expression: "_$g(43,'v-show')"
+              value: _vm._$g(44, "v-show"),
+              expression: "_$g(44,'v-show')"
             }
           ],
-          staticClass: _vm._$g(43, "sc"),
-          attrs: { _i: 43 },
+          staticClass: _vm._$g(44, "sc"),
+          attrs: { _i: 44 },
           on: {
             click: function($event) {
               return _vm.$handleViewEvent($event, { stop: true })
@@ -1578,53 +1578,53 @@ var render = function() {
         [
           _c(
             "v-uni-view",
-            { staticClass: _vm._$g(44, "sc"), attrs: { _i: 44 } },
+            { staticClass: _vm._$g(45, "sc"), attrs: { _i: 45 } },
             [
               _c(
                 "v-uni-view",
-                { staticClass: _vm._$g(45, "sc"), attrs: { _i: 45 } },
+                { staticClass: _vm._$g(46, "sc"), attrs: { _i: 46 } },
                 [
                   _c(
                     "v-uni-view",
-                    { staticClass: _vm._$g(46, "sc"), attrs: { _i: 46 } },
+                    { staticClass: _vm._$g(47, "sc"), attrs: { _i: 47 } },
                     [
                       _c("v-uni-image", {
-                        staticClass: _vm._$g(47, "sc"),
+                        staticClass: _vm._$g(48, "sc"),
                         attrs: {
-                          src: _vm._$g(47, "a-src"),
+                          src: _vm._$g(48, "a-src"),
                           mode: "aspectFill",
-                          _i: 47
+                          _i: 48
                         }
                       }),
-                      _vm._v(_vm._$g(46, "t1-0") + "'s的红包")
+                      _vm._v(_vm._$g(47, "t1-0") + "'s的红包")
                     ],
                     1
                   ),
-                  _vm._$g(48, "i")
+                  _vm._$g(49, "i")
                     ? _c(
                         "v-uni-view",
-                        { staticClass: _vm._$g(48, "sc"), attrs: { _i: 48 } },
-                        [_vm._v("这个红包属于：" + _vm._$g(48, "t0-0"))]
+                        { staticClass: _vm._$g(49, "sc"), attrs: { _i: 49 } },
+                        [_vm._v("这个红包属于：" + _vm._$g(49, "t0-0"))]
                       )
                     : _c(
                         "v-uni-view",
-                        { staticClass: _vm._$g(49, "sc"), attrs: { _i: 49 } },
-                        [_vm._v(_vm._$g(49, "t0-0"))]
+                        { staticClass: _vm._$g(50, "sc"), attrs: { _i: 50 } },
+                        [_vm._v(_vm._$g(50, "t0-0"))]
                       ),
                   _c(
                     "v-uni-view",
-                    { staticClass: _vm._$g(50, "sc"), attrs: { _i: 50 } },
-                    [_vm._v(_vm._$g(50, "t0-0"))]
+                    { staticClass: _vm._$g(51, "sc"), attrs: { _i: 51 } },
+                    [_vm._v(_vm._$g(51, "t0-0"))]
                   ),
                   _c(
                     "v-uni-view",
-                    { staticClass: _vm._$g(51, "sc"), attrs: { _i: 51 } },
+                    { staticClass: _vm._$g(52, "sc"), attrs: { _i: 52 } },
                     [
                       _vm._v(
                         "总计：" +
-                          _vm._$g(51, "t0-0") +
+                          _vm._$g(52, "t0-0") +
                           "/" +
-                          _vm._$g(51, "t0-1")
+                          _vm._$g(52, "t0-1")
                       )
                     ]
                   )
@@ -1633,49 +1633,39 @@ var render = function() {
               ),
               _c(
                 "v-uni-view",
-                { staticClass: _vm._$g(52, "sc"), attrs: { _i: 52 } },
-                _vm._l(_vm._$g(53, "f"), function(item, index, $22, $32) {
+                { staticClass: _vm._$g(53, "sc"), attrs: { _i: 53 } },
+                _vm._l(_vm._$g(54, "f"), function(item, index, $22, $32) {
                   return _c(
                     "v-uni-view",
                     {
                       key: item,
-                      staticClass: _vm._$g("53-" + $32, "sc"),
-                      attrs: { _i: "53-" + $32 }
+                      staticClass: _vm._$g("54-" + $32, "sc"),
+                      attrs: { _i: "54-" + $32 }
                     },
                     [
                       _c("v-uni-image", {
-                        staticClass: _vm._$g("54-" + $32, "sc"),
+                        staticClass: _vm._$g("55-" + $32, "sc"),
                         attrs: {
-                          src: _vm._$g("54-" + $32, "a-src"),
+                          src: _vm._$g("55-" + $32, "a-src"),
                           mode: "aspectFill",
-                          _i: "54-" + $32
+                          _i: "55-" + $32
                         }
                       }),
                       _c(
                         "v-uni-view",
                         {
-                          staticClass: _vm._$g("55-" + $32, "sc"),
-                          attrs: { _i: "55-" + $32 }
+                          staticClass: _vm._$g("56-" + $32, "sc"),
+                          attrs: { _i: "56-" + $32 }
                         },
                         [
                           _c(
                             "v-uni-view",
                             {
-                              staticClass: _vm._$g("56-" + $32, "sc"),
-                              attrs: { _i: "56-" + $32 }
+                              staticClass: _vm._$g("57-" + $32, "sc"),
+                              attrs: { _i: "57-" + $32 }
                             },
-                            [_vm._v(_vm._$g("56-" + $32, "t0-0"))]
+                            [_vm._v(_vm._$g("57-" + $32, "t0-0"))]
                           ),
-                          _vm._$g("57-" + $32, "i")
-                            ? _c(
-                                "v-uni-view",
-                                {
-                                  staticClass: _vm._$g("57-" + $32, "sc"),
-                                  attrs: { _i: "57-" + $32 }
-                                },
-                                [_vm._v("来自老王的认可")]
-                              )
-                            : _vm._e(),
                           _vm._$g("58-" + $32, "i")
                             ? _c(
                                 "v-uni-view",
@@ -1683,7 +1673,7 @@ var render = function() {
                                   staticClass: _vm._$g("58-" + $32, "sc"),
                                   attrs: { _i: "58-" + $32 }
                                 },
-                                [_vm._v("0溢事件")]
+                                [_vm._v("来自老王的认可")]
                               )
                             : _vm._e(),
                           _vm._$g("59-" + $32, "i")
@@ -1693,16 +1683,26 @@ var render = function() {
                                   staticClass: _vm._$g("59-" + $32, "sc"),
                                   attrs: { _i: "59-" + $32 }
                                 },
+                                [_vm._v("0溢事件")]
+                              )
+                            : _vm._e(),
+                          _vm._$g("60-" + $32, "i")
+                            ? _c(
+                                "v-uni-view",
+                                {
+                                  staticClass: _vm._$g("60-" + $32, "sc"),
+                                  attrs: { _i: "60-" + $32 }
+                                },
                                 [_vm._v("抢红包有风险")]
                               )
                             : _vm._e(),
                           _c(
                             "v-uni-view",
                             {
-                              staticClass: _vm._$g("60-" + $32, "sc"),
-                              attrs: { _i: "60-" + $32 }
+                              staticClass: _vm._$g("61-" + $32, "sc"),
+                              attrs: { _i: "61-" + $32 }
                             },
-                            [_vm._v(_vm._$g("60-" + $32, "t0-0"))]
+                            [_vm._v(_vm._$g("61-" + $32, "t0-0"))]
                           )
                         ],
                         1
@@ -1710,10 +1710,10 @@ var render = function() {
                       _c(
                         "v-uni-view",
                         {
-                          staticClass: _vm._$g("61-" + $32, "sc"),
-                          attrs: { _i: "61-" + $32 }
+                          staticClass: _vm._$g("62-" + $32, "sc"),
+                          attrs: { _i: "62-" + $32 }
                         },
-                        [_vm._v(_vm._$g("61-" + $32, "t0-0") + " 积分")]
+                        [_vm._v(_vm._$g("62-" + $32, "t0-0") + " 积分")]
                       )
                     ],
                     1
@@ -2571,7 +2571,7 @@ if(false) {}
 var ___CSS_LOADER_API_IMPORT___ = __webpack_require__(/*! ./node_modules/css-loader/dist/runtime/api.js */ 10);
 exports = ___CSS_LOADER_API_IMPORT___(false);
 // Module
-exports.push([module.i, "\n.content[data-v-e057ff54] {\n\twidth: 100vw;\n\theight: 100%;\n\tbackground-color: #3b3e43;\n}\n.userAvatar[data-v-e057ff54] {\n\twidth: 40px;\n\theight: 40px !important;\n\tborder-radius: 50%;\n\tmargin-right: 10px;\n\tmargin-top: 10px;\n}\n.msgInfo[data-v-e057ff54] {\n\tposition: relative;\n\tdisplay: flex;\n\tjustify-content: flex-start;\n\talign-items: flex-start;\n\twidth: 100%;\n\tmargin-top: 10px;\n}\n.msgInfo.isYou[data-v-e057ff54] {\n\tjustify-content: flex-end;\n}\n.MsgDetailBox[data-v-e057ff54] {\n\tdisplay: flex;\n\tjustify-content: space-between;\n\talign-items: flex-end;\n}\n.contentBox[data-v-e057ff54] {\n\tmin-height: 100%;\n\tpadding: 15px 10px 80px;\n\tbox-sizing: border-box;\n}\n.msgBox[data-v-e057ff54] {\n\tdisplay: flex;\n\tjustify-content: center;\n\talign-items: flex-start;\n\tflex-direction: column;\n}\n.isYou .msgBox[data-v-e057ff54] {\n\talign-items: flex-end;\n}\n.isYou .userAvatar[data-v-e057ff54] {\n\twidth: 40px;\n\theight: 40px;\n\tborder-radius: 50%;\n\tmargin-left: 10px;\n\tmargin-top: 0;\n}\n.userName[data-v-e057ff54] {\n\tfont-size: 12px;\n\tcolor: #fff;\n}\n.msgContent[data-v-e057ff54] {\n\tposition: relative;\n\tmin-width: 10px;\n\tmax-width: 60vw;\n\tmin-height: 15px;\n\tmargin: 5px 0;\n\tpadding: 5px 10px;\n\tborder-radius: 5px;\n\tbackground-color: #fff;\n\t/* overflow: hidden; */\n}\n.msgContent[data-v-e057ff54]::before {\n\tcontent: \"\";\n\tposition: absolute;\n\tleft: -10px;\n\ttop: 5px;\n\twidth: 0;\n\theight: 0;\n\tborder-right: 5px solid #fff;\n\tborder-top: 5px solid rgba(0, 0, 0, 0);\n\tborder-bottom: 5px solid rgba(0, 0, 0, 0);\n\tborder-left: 5px solid rgba(0, 0, 0, 0);\n}\n.isYou .msgContent[data-v-e057ff54] {\n\tbackground: #9eea6a;\n}\n.isYou .msgContent[data-v-e057ff54]::before {\n\tcontent: \"\";\n\tposition: absolute;\n\tright: -10px;\n\tleft: auto;\n\ttop: 5px;\n\twidth: 0;\n\theight: 0;\n\tborder-right: 5px solid rgba(0, 0, 0, 0);\n\tborder-top: 5px solid rgba(0, 0, 0, 0);\n\tborder-bottom: 5px solid rgba(0, 0, 0, 0);\n\tborder-left: 5px solid #9eea6a;\n}\n.msgContent p[data-v-e057ff54] {\n\tmin-width: 10px;\n}\n.sendBox[data-v-e057ff54] {\n\tposition: fixed;\n\tbottom: 0;\n\tleft: 0;\n\twidth: 100vw;\n\tmin-height: 100px;\n\tpadding: 0 15px;\n\tbackground: #fff;\n\tbox-sizing: border-box;\n}\n.menuBox[data-v-e057ff54] {\n\tdisplay: flex;\n\theight: 42px;\n\tpadding: 5px 0;\n\tborder-top: 1px solid #F8F8F8;\n\tbox-sizing: border-box;\n}\n.iconBtn[data-v-e057ff54] {\n\tmargin: 0 5px;\n}\n.iconBtn uni-image[data-v-e057ff54] {\n\theight: 32px;\n}\n.chat-input[data-v-e057ff54] {\n\twidth: 100%;\n\theight: calc(100% - 42px);\n\tpadding: 10px;\n\tline-height: 30px;\n\tbox-sizing: border-box;\n}\n.red-packet[data-v-e057ff54] {\n\t/* position: relative; */\n\tcolor: #fff;\n\theight: 200px;\n\tmargin: 10px auto 0;\n\twidth: 160px;\n\tborder-radius: 15px;\n\tbackground: #c61a2f;\n\tbox-sizing: border-box;\n\tbox-shadow: 0 0 2px 2px #333;\n\toverflow: hidden;\n}\n.rp-header[data-v-e057ff54] {\n\t/* position: absolute; */\n\twidth: 160px;\n\theight: 200px;\n\tmargin-top: -120px;\n\tborder-radius: 100%;\n\tbackground: #f94151;\n}\n.rp-main[data-v-e057ff54] {\n\twidth: 100%;\n\theight: 100%;\n\ttext-align: center;\n}\n.rp-msg[data-v-e057ff54] {\n\tpadding: 0 10px;\n\tbox-sizing: border-box;\n\toverflow: hidden;\n\ttext-overflow: ellipsis;\n\twhite-space: nowrap;\n\tfont-size: 12px;\n}\n.red-packet .open[data-v-e057ff54] {\n\twidth: 40px;\n\theight: 40px;\n\tcolor: #fff;\n\tline-height: 40px;\n\tfont-size: 14px;\n\tmargin: -20px auto 20px;\n\tbackground: #ffb03a;\n\tborder-radius: 100%;\n}\n.redPacketinfo[data-v-e057ff54] {\n\tdisplay: flex;\n\tflex-direction: row;\n\talign-items: center;\n\tjustify-content: center;\n\tcolor: #fff;\n\tfont-size: 12px;\n\twidth: 100%;\n}\n.humanNature[data-v-e057ff54] {\n\twidth: 35px;\n\theight: 35px;\n\tmargin-left: 5px;\n\ttext-align: center;\n\tline-height: 35px;\n\tfont-size: 10px;\n\tcolor: #000;\n\tbackground: #fff;\n\tborder-radius: 50%;\n\t-webkit-transform: translateY(-20%);\n\t        transform: translateY(-20%);\n}\n.redPacketBg[data-v-e057ff54] {\n\tposition: fixed;\n\tz-index: 250;\n\ttop: 0;\n\tleft: 0;\n\twidth: 100vw;\n\theight: 100vh;\n}\n.redPacketbox[data-v-e057ff54] {\n\tposition: absolute;\n\ttop: 8vh;\n\tleft: 50%;\n\twidth: 80vw;\n\theight: 70vh;\n\tbox-sizing: border-box;\n\t-webkit-transform: translateX(-50%);\n\t        transform: translateX(-50%);\n\tbackground: #fdf7eb;\n}\n.redPacketInfo[data-v-e057ff54] {\n\twidth: 100%;\n\theight: 130px;\n\ttext-align: center;\n\tbackground: #f94151;\n\tpadding: 15px;\n\tbox-sizing: border-box;\n}\n.rpi-user[data-v-e057ff54] {\n\tdisplay: flex;\n\tjustify-content: center;\n\talign-items: center;\n\tfont-size: 14px;\n}\n.rpi-user-img[data-v-e057ff54] {\n\twidth: 20px;\n\theight: 20px;\n\tmargin-right: 5px;\n}\n.rpi-recivers[data-v-e057ff54] {\n\tfont-size: 14px;\n}\n.rpi-msg[data-v-e057ff54] {\n\tfont-size: 24px;\n}\n.rpi-count[data-v-e057ff54] {\n\tfont-size: 12px;\n}\n.redPacketList[data-v-e057ff54] {\n\twidth: 100%;\n\theight: calc(100% - 130px);\n\toverflow-y: scroll;\n\toverflow-x: hidden;\n\tpadding: 15px;\n\tbox-sizing: border-box;\n}\n.rpl-item[data-v-e057ff54] {\n\tdisplay: flex;\n\tjustify-content: space-between;\n\talign-items: center;\n\tmargin: 5px 0;\n\tpadding: 5px;\n\tbackground: #fff;\n}\n.rpl-item[data-v-e057ff54]:not(:last-child) {\n\tborder-bottom: 1px dotted #999;\n}\n.rpl-img[data-v-e057ff54] {\n\twidth: 38px;\n\theight: 38px;\n\tborder-radius: 5px;\n}\n.rpl-time[data-v-e057ff54] {\n\tfont-size: 12px;\n\tcolor: rgba(0, 0, 0, 0.38);\n}\n.rpl-info[data-v-e057ff54] {\n\tdisplay: flex;\n\tflex-direction: column;\n\tjustify-content: flex-start;\n\twidth: 65%;\n\ttext-align: left;\n\tmargin-left: 5px;\n}\n.rpl-tag[data-v-e057ff54] {\n\tdisplay: inline-block;\n\tpadding: 0 5px;\n\tline-height: 20px;\n\theight: 20px;\n\tmax-width: 95px;\n\ttext-align: center;\n\tfont-size: 12px;\n\tborder-radius: 5px;\n\tborder: 1px solid #fff;\n}\n.isMax[data-v-e057ff54] {\n\tbackground-color: #60b044;\n\tborder-color: #5ca941;\n\tcolor: #fff;\n}\n.is0[data-v-e057ff54] {\n\tborder-color: #D5D5D5;\n\tcolor: #faa;\n}\n.isNeg[data-v-e057ff54] {\n\tborder-color: #D5D5D5;\n\tcolor: #000;\n}\n.rpl-money[data-v-e057ff54] {\n\twidth: 25%;\n\tfont-size: 12px;\n\ttext-align: right;\n}\n.faceBox[data-v-e057ff54] {\n\tdisplay: flex;\n\tjustify-content: space-between;\n\talign-items: center;\n\tflex-wrap: wrap;\n\twidth: 100%;\n\theight: 200px;\n\toverflow-y: scroll;\n}\n.face-item[data-v-e057ff54] {\n\twidth: 50px;\n\theight: 50px;\n\tmargin: 5px;\n}\n.longTap-list[data-v-e057ff54] {\n\tposition: fixed;\n\tleft: 50%;\n\ttop: -25vw;\n\tz-index: 100;\n\tdisplay: flex;\n\tpadding: 10px;\n\tmin-width: 100px;\n\theight: 20px;\n\tfont-size: 12px;\n\tbackground: #fff;\n\tbox-shadow: 0 2px 2px #6c6c6c;\n\tborder-top-right-radius: 10px;\n\tborder-bottom-left-radius: 10px;\n}\n.longTap-item[data-v-e057ff54] {\n\tmargin: 0 5px;\n\theight: 20px;\n\tline-height: 20px;\n}\n", ""]);
+exports.push([module.i, "\n.content[data-v-e057ff54] {\n\twidth: 100vw;\n\theight: 100%;\n\tbackground-color: #3b3e43;\n}\n.userAvatar[data-v-e057ff54] {\n\twidth: 40px;\n\theight: 40px !important;\n\tborder-radius: 50%;\n\tmargin-right: 10px;\n\tmargin-top: 10px;\n}\n.msgInfo[data-v-e057ff54] {\n\tposition: relative;\n\tdisplay: flex;\n\tjustify-content: flex-start;\n\talign-items: flex-start;\n\twidth: 100%;\n\tmargin-top: 10px;\n}\n.msgInfo.isYou[data-v-e057ff54] {\n\tjustify-content: flex-end;\n}\n.MsgDetailBox[data-v-e057ff54] {\n\tdisplay: flex;\n\tjustify-content: space-between;\n\talign-items: flex-end;\n}\n.contentBox[data-v-e057ff54] {\n\tmin-height: 100%;\n\tpadding: 15px 10px 80px;\n\tbox-sizing: border-box;\n}\n.msgBox[data-v-e057ff54] {\n\tdisplay: flex;\n\tjustify-content: center;\n\talign-items: flex-start;\n\tflex-direction: column;\n}\n.isYou .msgBox[data-v-e057ff54] {\n\talign-items: flex-end;\n}\n.isYou .userAvatar[data-v-e057ff54] {\n\twidth: 40px;\n\theight: 40px;\n\tborder-radius: 50%;\n\tmargin-left: 10px;\n\tmargin-top: 0;\n}\n.userName[data-v-e057ff54] {\n\tfont-size: 12px;\n\tcolor: #fff;\n}\n.msgContent[data-v-e057ff54] {\n\tposition: relative;\n\tmin-width: 10px;\n\tmax-width: 60vw;\n\tmin-height: 15px;\n\tmargin: 5px 0;\n\tpadding: 5px 10px;\n\tborder-radius: 5px;\n\tbackground-color: #fff;\n\t/* overflow: hidden; */\n}\n.msgContent[data-v-e057ff54]::before {\n\tcontent: \"\";\n\tposition: absolute;\n\tleft: -10px;\n\ttop: 5px;\n\twidth: 0;\n\theight: 0;\n\tborder-right: 5px solid #fff;\n\tborder-top: 5px solid rgba(0, 0, 0, 0);\n\tborder-bottom: 5px solid rgba(0, 0, 0, 0);\n\tborder-left: 5px solid rgba(0, 0, 0, 0);\n}\n.isYou .msgContent[data-v-e057ff54] {\n\tbackground: #9eea6a;\n}\n.isYou .msgContent[data-v-e057ff54]::before {\n\tcontent: \"\";\n\tposition: absolute;\n\tright: -10px;\n\tleft: auto;\n\ttop: 5px;\n\twidth: 0;\n\theight: 0;\n\tborder-right: 5px solid rgba(0, 0, 0, 0);\n\tborder-top: 5px solid rgba(0, 0, 0, 0);\n\tborder-bottom: 5px solid rgba(0, 0, 0, 0);\n\tborder-left: 5px solid #9eea6a;\n}\n.msgContent p[data-v-e057ff54] {\n\tmin-width: 10px;\n}\n.sendBox[data-v-e057ff54] {\n\tposition: fixed;\n\tbottom: 0;\n\tleft: 0;\n\twidth: 100vw;\n\tmin-height: 100px;\n\tpadding: 0 15px;\n\tbackground: #fff;\n\tbox-sizing: border-box;\n}\n.menuBox[data-v-e057ff54] {\n\tdisplay: flex;\n\theight: 42px;\n\tpadding: 5px 0;\n\tborder-top: 1px solid #F8F8F8;\n\tbox-sizing: border-box;\n}\n.sendBtn[data-v-e057ff54] {\n\tposition: absolute;\n\tright: 5vw;\n\ttop: 10px;\n\tz-index: 10;\n\theight: 30px;\n\tline-height: 30px;\n\tfont-size: 14px;\n\tbackground-color: #60b044;\n\tcolor: #fff;\n}\n.iconBtn[data-v-e057ff54] {\n\tmargin: 0 5px;\n}\n.iconBtn uni-image[data-v-e057ff54] {\n\theight: 32px;\n}\n.chat-input[data-v-e057ff54] {\n\twidth: 100%;\n\theight: calc(100% - 42px);\n\tpadding: 10px;\n\tline-height: 30px;\n\tbox-sizing: border-box;\n}\n.red-packet[data-v-e057ff54] {\n\t/* position: relative; */\n\tcolor: #fff;\n\theight: 200px;\n\tmargin: 10px auto 0;\n\twidth: 160px;\n\tborder-radius: 15px;\n\tbackground: #c61a2f;\n\tbox-sizing: border-box;\n\tbox-shadow: 0 0 2px 2px #333;\n\toverflow: hidden;\n}\n.rp-header[data-v-e057ff54] {\n\t/* position: absolute; */\n\twidth: 160px;\n\theight: 200px;\n\tmargin-top: -120px;\n\tborder-radius: 100%;\n\tbackground: #f94151;\n}\n.rp-main[data-v-e057ff54] {\n\twidth: 100%;\n\theight: 100%;\n\ttext-align: center;\n}\n.rp-msg[data-v-e057ff54] {\n\tpadding: 0 10px;\n\tbox-sizing: border-box;\n\toverflow: hidden;\n\ttext-overflow: ellipsis;\n\twhite-space: nowrap;\n\tfont-size: 12px;\n}\n.red-packet .open[data-v-e057ff54] {\n\twidth: 40px;\n\theight: 40px;\n\tcolor: #fff;\n\tline-height: 40px;\n\tfont-size: 14px;\n\tmargin: -20px auto 20px;\n\tbackground: #ffb03a;\n\tborder-radius: 100%;\n}\n.redPacketinfo[data-v-e057ff54] {\n\tdisplay: flex;\n\tflex-direction: row;\n\talign-items: center;\n\tjustify-content: center;\n\tcolor: #fff;\n\tfont-size: 12px;\n\twidth: 100%;\n}\n.humanNature[data-v-e057ff54] {\n\twidth: 35px;\n\theight: 35px;\n\tmargin-left: 5px;\n\ttext-align: center;\n\tline-height: 35px;\n\tfont-size: 12px;\n\tfont-weight: bold;\n\tcolor: #000;\n\tbackground: #fff;\n\tborder-radius: 50%;\n\t-webkit-transform: translateY(-20%);\n\t        transform: translateY(-20%);\n}\n.redPacketBg[data-v-e057ff54] {\n\tposition: fixed;\n\tz-index: 250;\n\ttop: 0;\n\tleft: 0;\n\twidth: 100vw;\n\theight: 100vh;\n}\n.redPacketbox[data-v-e057ff54] {\n\tposition: absolute;\n\ttop: 8vh;\n\tleft: 50%;\n\twidth: 80vw;\n\theight: 70vh;\n\tbox-sizing: border-box;\n\t-webkit-transform: translateX(-50%);\n\t        transform: translateX(-50%);\n\tbackground: #fdf7eb;\n}\n.redPacketInfo[data-v-e057ff54] {\n\twidth: 100%;\n\theight: 130px;\n\ttext-align: center;\n\tbackground: #f94151;\n\tpadding: 15px;\n\tbox-sizing: border-box;\n}\n.rpi-user[data-v-e057ff54] {\n\tdisplay: flex;\n\tjustify-content: center;\n\talign-items: center;\n\tfont-size: 14px;\n}\n.rpi-user-img[data-v-e057ff54] {\n\twidth: 20px;\n\theight: 20px;\n\tmargin-right: 5px;\n}\n.rpi-recivers[data-v-e057ff54] {\n\tfont-size: 14px;\n}\n.rpi-msg[data-v-e057ff54] {\n\tfont-size: 24px;\n}\n.rpi-count[data-v-e057ff54] {\n\tfont-size: 12px;\n}\n.redPacketList[data-v-e057ff54] {\n\twidth: 100%;\n\theight: calc(100% - 130px);\n\toverflow-y: scroll;\n\toverflow-x: hidden;\n\tpadding: 15px;\n\tbox-sizing: border-box;\n}\n.rpl-item[data-v-e057ff54] {\n\tdisplay: flex;\n\tjustify-content: space-between;\n\talign-items: center;\n\tmargin: 5px 0;\n\tpadding: 5px;\n\tbackground: #fff;\n}\n.rpl-item[data-v-e057ff54]:not(:last-child) {\n\tborder-bottom: 1px dotted #999;\n}\n.rpl-img[data-v-e057ff54] {\n\twidth: 38px;\n\theight: 38px;\n\tborder-radius: 5px;\n}\n.rpl-time[data-v-e057ff54] {\n\tfont-size: 12px;\n\tcolor: rgba(0, 0, 0, 0.38);\n}\n.rpl-info[data-v-e057ff54] {\n\tdisplay: flex;\n\tflex-direction: column;\n\tjustify-content: flex-start;\n\twidth: 65%;\n\ttext-align: left;\n\tmargin-left: 5px;\n}\n.rpl-tag[data-v-e057ff54] {\n\tdisplay: inline-block;\n\tpadding: 0 5px;\n\tline-height: 20px;\n\theight: 20px;\n\tmax-width: 95px;\n\ttext-align: center;\n\tfont-size: 12px;\n\tborder-radius: 5px;\n\tborder: 1px solid #fff;\n}\n.isMax[data-v-e057ff54] {\n\tbackground-color: #60b044;\n\tborder-color: #5ca941;\n\tcolor: #fff;\n}\n.is0[data-v-e057ff54] {\n\tborder-color: #D5D5D5;\n\tcolor: #faa;\n}\n.isNeg[data-v-e057ff54] {\n\tborder-color: #D5D5D5;\n\tcolor: #000;\n}\n.rpl-money[data-v-e057ff54] {\n\twidth: 25%;\n\tfont-size: 12px;\n\ttext-align: right;\n}\n.faceBox[data-v-e057ff54] {\n\tdisplay: flex;\n\tjustify-content: flex-start;\n\talign-items: center;\n\tflex-wrap: wrap;\n\twidth: 100%;\n\theight: 200px;\n\toverflow-y: scroll;\n}\n.face-item[data-v-e057ff54] {\n\tmin-width: 50px;\n\tmax-width: 50px;\n\tmin-height: 50px;\n\tmax-height: 50px;\n\tmargin: 5px;\n}\n.longTap-list[data-v-e057ff54] {\n\tposition: fixed;\n\tleft: 50%;\n\ttop: -25vw;\n\tz-index: 100;\n\tdisplay: flex;\n\tpadding: 10px;\n\tmin-width: 100px;\n\theight: 20px;\n\tfont-size: 12px;\n\tbackground: #fff;\n\tbox-shadow: 0 2px 2px #6c6c6c;\n\tborder-top-right-radius: 10px;\n\tborder-bottom-left-radius: 10px;\n}\n.longTap-item[data-v-e057ff54] {\n\tmargin: 0 5px;\n\theight: 20px;\n\tline-height: 20px;\n}\n", ""]);
 // Exports
 module.exports = exports;
 
