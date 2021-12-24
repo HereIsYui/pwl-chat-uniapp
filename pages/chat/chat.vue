@@ -1,58 +1,62 @@
 <template>
 	<view class="content">
-		<view class="contentBox" v-if="content.length > 0">
-			<view class="msgInfo" v-for="(item,index) in content" :key="index"
-				:class="{isYou : (data.userName == item.userName ? true : false)}">
-				<template v-if="item.type != 'redPacketStatus'">
-					<image v-if="data.userName != item.userName" :src='item.userAvatarURL' mode="widthFix"
-						class="userAvatar" @longpress="atThis(item.userName)" @click="toUser(item.userName)"></image>
-					<view class="MsgDetailBox" @longpress="longpress" :data-oid="item.oId" :data-msg="item.content"
-						:data-username="item.userName">
-						<view class="msgBox">
-							<template v-if="data.userName != item.userName">
-								<view class="userName" v-if="item.userNickname">{{item.userNickname}}({{item.userName}})
-								</view>
-								<view class="userName" v-else>{{item.userName}}</view>
-							</template>
-							<view v-if="item.isMoney" @click="getMoney(item.oId)">
-								<view class="red-packet">
-									<view class="rp-header"></view>
-									<view class="rp-main">
-										<view class="open">开</view>
-										<view class="rp-msg">
-											<view>{{item.content.msg}}</view>
-											<view style="font-weight: bold;">{{defaultTitle[item.content.type]}}</view>
+		<view class="contentHeight">
+			<view class="contentBox">
+				<view class="msgInfo" v-for="(item,index) in content" :key="index"
+					:class="{isYou : (data.userName == item.userName ? true : false)}">
+					<template v-if="item.type != 'redPacketStatus'">
+						<image v-if="data.userName != item.userName" :src='item.userAvatarURL' mode="widthFix"
+							class="userAvatar" @longpress="atThis(item.userName)" @click="toUser(item.userName)"></image>
+						<view class="MsgDetailBox" @longpress="longpress" :data-oid="item.oId" :data-msg="item.content"
+							:data-username="item.userName">
+							<view class="msgBox">
+								<template v-if="data.userName != item.userName">
+									<view class="userName" v-if="item.userNickname">{{item.userNickname}}({{item.userName}})
+									</view>
+									<view class="userName" v-else>{{item.userName}}</view>
+								</template>
+								<view v-if="item.isMoney" @click="getMoney(item.oId)">
+									<view class="red-packet">
+										<view class="rp-header"></view>
+										<view class="rp-main">
+											<view class="open">开</view>
+											<view class="rp-msg">
+												<view>{{item.content.msg}}</view>
+												<view style="font-weight: bold;">{{defaultTitle[item.content.type]}}</view>
+											</view>
 										</view>
 									</view>
 								</view>
+								<view class="msgContent" v-else>
+									<mp-html @load="scrollToBottom()" container-style="MessageBox" @ready="scrollToBottom()" :copy-link="false" :content="item.content" :show-img-menu="false" @linktap="showLink" />
+									<!-- <view v-html="item.content"></view> -->
+								</view>
+			
 							</view>
-							<view class="msgContent" v-else>
-								<!-- <mp-html @load="scrollToBottom()" container-style="MessageBox" @ready="scrollToBottom()" :copy-link="false" :content="item.content" :show-img-menu="false" @linktap="showLink" /> -->
-									<view v-html="item.content"></view>
-							</view>
-
+							<view class="humanNature"
+								v-if="content.length > 2 && firstMsg.content == secondMsg.content && firstMsg.oId == item.oId && item.userName != data.userName"
+								@click="SendMsg(item.content)">+1</view>
 						</view>
-						<view class="humanNature"
-							v-if="content.length > 2 && firstMsg.content == secondMsg.content && firstMsg.oId == item.oId && item.userName != data.userName"
-							@click="SendMsg(item.content)">+1</view>
-					</view>
-					<image v-if="data.userName == item.userName" :src='item.userAvatarURL' mode="widthFix"
-						class="userAvatar"></image>
-				</template>
-				<template v-if="item.type == 'redPacketStatus'">
-					<view class="redPacketinfo">{{item.whoGot}} 抢到了 {{item.whoGive}} 的 <view @click="getMoney(item.oId)"
-							style="color:#f94151">红包</view>
-						({{item.got}}/{{item.count}})</view>
-				</template>
+						<image v-if="data.userName == item.userName" :src='item.userAvatarURL' mode="widthFix"
+							class="userAvatar"></image>
+					</template>
+					<template v-if="item.type == 'redPacketStatus'">
+						<view class="redPacketinfo">{{item.whoGot}} 抢到了 {{item.whoGive}} 的 <view @click="getMoney(item.oId)"
+								style="color:#f94151">红包</view>
+							({{item.got}}/{{item.count}})</view>
+					</template>
+				</view>
 			</view>
-			<view id="BottomView" style="height: 50px;"></view>
 		</view>
 		<!-- 发送栏 -->
 		<view class="sendBox">
-			<!-- 保留参数 等uniapp更新 -->
-			<!-- confirm-type="send" confirm-hold="true" @confirm="SendMsg()"  -->
-			<textarea type="text" v-model="msg" class="chat-input" :focus="isSend" @focus="onInputFocus()"
-				@blur="noSend()" value="" placeholder="请输入" />
+			<view class="sendTextBox">
+				<view class="chat-input">
+					<textarea type="text" v-model="msg" :focus="isSend" @focus="onInputFocus()" auto-height
+						@blur="noSend()" value="" placeholder="请输入" />
+				</view>
+				<button type="default" class="sendBtn" @click="SendMsg()">发送</button>
+			</view>
 			<view class="menuBox">
 				<view class="iconBtn" @click="toRedPacket()">
 					<image src="../../static/icon/hongbao.png" mode="heightFix"></image>
@@ -64,21 +68,15 @@
 					<image src="../../static/icon/tupian.png" mode="heightFix"></image>
 				</view>
 			</view>
-			<view class="faceBox" v-show="isShowFace">
-				<view class="face-item" v-for="(item,index) in face" :key="index">
-					<image class="face-item" :src="item.url" mode="aspectFit" @click="sendFace(item.preUrl)"></image>
-				</view>
-			</view>
-			<button type="default" class="sendBtn" @touchend.prevent="SendMsg()">发送</button>
 		</view>
 		<!-- 右键菜单 -->
-		<view class="longTap-list" :style="{top:clientY + 'px',left:clientX + 'px'}">
+		<!-- <view class="longTap-list" :style="{top:clientY + 'px',left:clientX + 'px'}">
 			<view class="longTap-item" @click="longTapEvent(0)">复读机</view>
 			<view class="longTap-item" @click="longTapEvent(1)"
 				v-if="data.userRole =='协警' ||data.userRole =='OP' || data.userRole =='管理员'">撤回</view>
 			<view class="longTap-item" @click="longTapEvent(1)" v-else-if="data.userName == item.userName">撤回</view>
 			<view class="longTap-item" @click="longTapEvent(2)">引用</view>
-		</view>
+		</view> -->
 		<!-- 红包 -->
 		<view class="redPacketBg" v-show="showRedPacketData" @click.stop="showRedPacketData = false">
 			<view class="redPacketbox">
@@ -172,7 +170,7 @@
 		},
 		onPageScroll(e) {
 			// 传入scrollTop值并触发所有easy-loadimage组件下的滚动监听事件
-			// this.scrollTop = e.scrollTop;
+			this.scrollTop = e.scrollTop;
 			this.scrollPower = false;
 			this.clientY = -999;
 			if(e.scrollTop < 50){
@@ -511,7 +509,7 @@
 					query.exec(res => {
 						if (res[0]) {
 							setTimeout(() => {
-								wx.pageScrollTo({
+								uni.pageScrollTo({
 									scrollTop: res[0].height,
 									duration: 100
 								})
@@ -528,6 +526,8 @@
 		width: 100vw;
 		height: 100%;
 		background-color: #3b3e43;
+		position: relative;
+		z-index: 1;
 	}
 
 	.userAvatar {
@@ -556,11 +556,16 @@
 		justify-content: space-between;
 		align-items: flex-end;
 	}
+	.contentHeight{
+		height: calc(100% - 100px);
+		padding: 15px 10px;
+		box-sizing: border-box;
+		overflow-y: auto;
+	}
 
 	.contentBox {
-		min-height: 100%;
-		padding: 15px 10px 80px;
-		box-sizing: border-box;
+		padding-bottom: 100px;
+		overflow-y: auto;
 	}
 
 	.msgBox {
@@ -635,14 +640,20 @@
 	}
 
 	.sendBox {
-		position: fixed;
-		bottom: 0;
-		left: 0;
 		width: 100vw;
 		min-height: 100px;
 		padding: 0 15px;
 		background: #fff;
 		box-sizing: border-box;
+		position: fixed;
+		bottom: 0;
+		leftleft: 0;
+	}
+
+	.sendBox .sendTextBox {
+		display: flex;
+		justify-content: space-between;
+		position: relative;
 	}
 
 	.menuBox {
@@ -654,15 +665,15 @@
 	}
 
 	.sendBtn {
-		position: absolute;
-		right: 5vw;
-		top: 10px;
-		z-index: 10;
+		width: 60px;
 		height: 30px;
 		line-height: 30px;
 		font-size: 14px;
 		background-color: #60b044;
 		color: #fff;
+		position: absolute;
+		bottom: 5px;
+		right: 0px;
 	}
 
 	.iconBtn {
@@ -674,11 +685,17 @@
 	}
 
 	.chat-input {
-		width: 100%;
-		height: calc(100% - 42px);
+		width: calc(100% - 60px);
+		/* height: calc(100% - 42px); */
+		/* min-height: 30px; */
+		max-height: calc(100% - 42px);
 		padding: 10px;
 		line-height: 30px;
 		box-sizing: border-box;
+	}
+
+	.chat-input uni-textarea {
+		width: 100%;
 	}
 
 	.red-packet {
