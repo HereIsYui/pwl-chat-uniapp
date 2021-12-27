@@ -6,10 +6,12 @@ const API = {
 	checkUser: baseURL + "/api/user",
 	getUserInfo: baseURL + "/user/",
 	emotions: baseURL + "/users/emotions",
-	liveness: baseURL + "user/liveness",
+	liveness: baseURL + "/user/liveness",
 	more: baseURL + "/chat-room/more",
 	send: baseURL + "/chat-room/send",
 	delete: baseURL + "/chat-room/revoke/", ///chat-room/revoke/{消息oId}
+	ylra: baseURL + "/activity/yesterday-liveness-reward-api",
+	icl: baseURL + "/api/activity/is-collected-liveness",
 	open: baseURL + "/chat-room/red-packet/open",
 	getface: baseURL + "/api/cloud/get",
 	upload: baseURL + "/upload"
@@ -80,12 +82,32 @@ export const getUserInfo = params => {
 		url: API.getUserInfo + params,
 	})
 }
+
+export const getLiveness = params =>{
+	return UTIL.flirt({
+		url: API.liveness,
+		data: params
+	})
+}
+
+export const getYesterdayLiveness = params =>{
+	return UTIL.flirt({
+		url: API.ylra,
+		data: params
+	})
+}
+
+export const checkCollectedLiveness = params =>{
+	return UTIL.flirt({
+		url: API.icl,
+		data: params
+	})
+}
+
 export const upload = params => {
-	// let data = new FormData();
-	// params.forEach(f => data.append('file[]', f));
 	return new Promise((resolve, reject) => {
 		uni.uploadFile({
-			url: API.upload, //仅为示例，非真实的接口地址
+			url: API.upload, 
 			filePath: params,
 			name: 'file[]',
 			header:{

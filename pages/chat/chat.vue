@@ -1,62 +1,65 @@
 <template>
 	<view class="content">
-		<view class="contentHeight">
-			<view class="contentBox">
-				<view class="msgInfo" v-for="(item,index) in content" :key="index"
-					:class="{isYou : (data.userName == item.userName ? true : false)}">
-					<template v-if="item.type != 'redPacketStatus'">
-						<image v-if="data.userName != item.userName" :src='item.userAvatarURL' mode="widthFix"
-							class="userAvatar" @longpress="atThis(item.userName)" @click="toUser(item.userName)"></image>
-						<view class="MsgDetailBox" @longpress="longpress" :data-oid="item.oId" :data-msg="item.content"
-							:data-username="item.userName">
-							<view class="msgBox">
-								<template v-if="data.userName != item.userName">
-									<view class="userName" v-if="item.userNickname">{{item.userNickname}}({{item.userName}})
-									</view>
-									<view class="userName" v-else>{{item.userName}}</view>
-								</template>
-								<view v-if="item.isMoney" @click="getMoney(item.oId)">
-									<view class="red-packet">
-										<view class="rp-header"></view>
-										<view class="rp-main">
-											<view class="open">开</view>
-											<view class="rp-msg">
-												<view>{{item.content.msg}}</view>
-												<view style="font-weight: bold;">{{defaultTitle[item.content.type]}}</view>
-											</view>
+		<!-- WebSocket断开提醒 -->
+		<view class="SocketCloseMsg" v-if="isSocketClose">
+			WebSocket已断开：{{JoinChatTime}}s后重新连接 <text class="textLink" @click="initChat()">点击重连</text>
+		</view>
+		<view class="contentBox" v-if="content.length > 0">
+			<view class="msgInfo" v-for="(item,index) in content" :key="index"
+				:class="{isYou : (data.userName == item.userName ? true : false)}">
+				<template v-if="item.type != 'redPacketStatus' && !item.hide">
+					<image v-if="data.userName != item.userName" :src='item.userAvatarURL' mode="widthFix"
+						class="userAvatar" @longpress="atThis(item.userName)" @click="toUser(item.userName)"></image>
+					<view class="MsgDetailBox" @longpress="longpress" :data-oid="item.oId" :data-msg="item.content"
+						:data-username="item.userName">
+						<view class="msgBox">
+							<template v-if="data.userName != item.userName">
+								<view class="userName" v-if="item.userNickname">{{item.userNickname}}({{item.userName}})
+								</view>
+								<view class="userName" v-else>{{item.userName}}</view>
+							</template>
+							<view v-if="item.isMoney" @click="getMoney(item.oId)">
+								<view class="red-packet">
+									<view class="rp-header"></view>
+									<view class="rp-main">
+										<view class="open">开</view>
+										<view class="rp-msg">
+											<view>{{item.content.msg}}</view>
+											<view style="font-weight: bold;">{{defaultTitle[item.content.type]}}</view>
 										</view>
 									</view>
 								</view>
-								<view class="msgContent" v-else>
-									<mp-html @load="scrollToBottom()" container-style="MessageBox" @ready="scrollToBottom()" :copy-link="false" :content="item.content" :show-img-menu="false" @linktap="showLink" />
-									<!-- <view v-html="item.content"></view> -->
-								</view>
-			
 							</view>
-							<view class="humanNature"
-								v-if="content.length > 2 && firstMsg.content == secondMsg.content && firstMsg.oId == item.oId && item.userName != data.userName"
-								@click="SendMsg(item.content)">+1</view>
+							<view class="msgContent" v-else>
+								<mp-html @load="scrollToBottom()" container-style="MessageBox" @ready="scrollToBottom()"
+									:copy-link="false" :content="item.content" :show-img-menu="false"
+									@linktap="showLink" />
+								<!-- <rich-text :nodes="item.content" :preview="true" @itemclick="showLink"></rich-text> -->
+							</view>
+
 						</view>
-						<image v-if="data.userName == item.userName" :src='item.userAvatarURL' mode="widthFix"
-							class="userAvatar"></image>
-					</template>
-					<template v-if="item.type == 'redPacketStatus'">
-						<view class="redPacketinfo">{{item.whoGot}} 抢到了 {{item.whoGive}} 的 <view @click="getMoney(item.oId)"
-								style="color:#f94151">红包</view>
-							({{item.got}}/{{item.count}})</view>
-					</template>
-				</view>
+						<view class="humanNature"
+							v-if="content.length > 2 && firstMsg.content == secondMsg.content && firstMsg.oId == item.oId && item.userName != data.userName"
+							@click="SendMsg(item.content)">+1</view>
+					</view>
+					<image v-if="data.userName == item.userName" :src='item.userAvatarURL' mode="widthFix"
+						class="userAvatar" @click="toUser(item.userName)"></image>
+				</template>
+				<template v-if="item.type == 'redPacketStatus'">
+					<view class="redPacketinfo">{{item.whoGot}} 抢到了 {{item.whoGive}} 的 <view @click="getMoney(item.oId)"
+							style="color:#f94151">红包</view>
+						({{item.got}}/{{item.count}})</view>
+				</template>
 			</view>
+			<view id="BottomView" style="height: 50px;"></view>
 		</view>
 		<!-- 发送栏 -->
 		<view class="sendBox">
-			<view class="sendTextBox">
-				<view class="chat-input">
-					<textarea type="text" v-model="msg" :focus="isSend" @focus="onInputFocus()" auto-height
-						@blur="noSend()" value="" placeholder="请输入" />
-				</view>
-				<button type="default" class="sendBtn" @click="SendMsg()">发送</button>
-			</view>
+			<view class="livenessLine" :style="{width:liveness+'%'}"></view>
+			<!-- 保留参数 等uniapp更新 -->
+			<!-- confirm-type="send" confirm-hold="true" @confirm="SendMsg()"  -->
+			<textarea type="text" v-model="msg" class="chat-input" :focus="isSend" @focus="onInputFocus()"
+				@blur="noSend()" value="" placeholder="请输入" />
 			<view class="menuBox">
 				<view class="iconBtn" @click="toRedPacket()">
 					<image src="../../static/icon/hongbao.png" mode="heightFix"></image>
@@ -68,15 +71,21 @@
 					<image src="../../static/icon/tupian.png" mode="heightFix"></image>
 				</view>
 			</view>
+			<view class="faceBox" v-show="isShowFace">
+				<view class="face-item" v-for="(item,index) in face" :key="index">
+					<image class="face-item" :src="item.url" mode="aspectFit" @click="sendFace(item.preUrl)"></image>
+				</view>
+			</view>
+			<button type="default" class="sendBtn" @touchend.prevent="SendMsg()">发送</button>
 		</view>
 		<!-- 右键菜单 -->
-		<!-- <view class="longTap-list" :style="{top:clientY + 'px',left:clientX + 'px'}">
+		<view class="longTap-list" :style="{top:clientY + 'px',left:clientX + 'px'}">
 			<view class="longTap-item" @click="longTapEvent(0)">复读机</view>
 			<view class="longTap-item" @click="longTapEvent(1)"
-				v-if="data.userRole =='协警' ||data.userRole =='OP' || data.userRole =='管理员'">撤回</view>
-			<view class="longTap-item" @click="longTapEvent(1)" v-else-if="data.userName == item.userName">撤回</view>
+				v-if="data.userRole =='纪律委员' || data.userRole =='OP' || data.userRole =='管理员'">撤回</view>
+			<view class="longTap-item" @click="longTapEvent(1)" v-else-if="data.userName == longData.userName">撤回</view>
 			<view class="longTap-item" @click="longTapEvent(2)">引用</view>
-		</view> -->
+		</view>
 		<!-- 红包 -->
 		<view class="redPacketBg" v-show="showRedPacketData" @click.stop="showRedPacketData = false">
 			<view class="redPacketbox">
@@ -106,6 +115,12 @@
 				</view>
 			</view>
 		</view>
+		<!-- 回到最新消息 -->
+		<view class="backTobottom" v-if="isShowToBottom" :style="{bottom:isShowFace ? '300px' : '100px'}"
+			@click="toBottom()">
+			查看最新消息
+		</view>
+
 	</view>
 </template>
 
@@ -119,7 +134,8 @@
 		send,
 		faceList,
 		getUserInfo,
-		deleteMsg
+		deleteMsg,
+		getLiveness
 	} from '../../utils/api.js'
 	export default {
 		components: {
@@ -135,7 +151,6 @@
 				secondMsg: null,
 				emojeSrc: '../../static/icon/huaji1.png',
 				redpacketData: {
-					"recivers": ["Yui"],
 					"who": [],
 					"info": {
 						"msg": "试试看，这是给你的红包吗？",
@@ -148,6 +163,7 @@
 				redpacketTitle: "",
 				showRedPacketData: false,
 				JoinChat: null,
+				JoinChatTime: 30,
 				scrollPower: true,
 				isShowFace: false,
 				face: [],
@@ -165,52 +181,143 @@
 					oId: "",
 					userName: "",
 				},
-				scrollTimeout: null
+				nowPage: 1,
+				isSending: false,
+				isHistory: false,
+				isShowToBottom: false,
+				isSocketClose: false,
+				scrollTimeout: null,
+				setting: {
+					JoinChatTime: 30,
+					ImageLoadHome: "https://pwl.yuis.cc/GetImage?url="
+				},
+				scrollInfo: {
+					oldTop: 99999
+				},
+				liveness: 0
+			}
+		},
+		onPullDownRefresh() {
+			console.log("loadPage~~")
+			clearTimeout(this.scrollTimeout);
+			this.scrollPower = false;
+			this.getHistoryMsg()
+		},
+		onReachBottom() {
+			this.scrollPower = true;
+			this.isShowToBottom = false;
+		},
+		onNavigationBarButtonTap(obj) {
+			if (obj.type == "menu") {
+				// 去设置页
+				uni.navigateTo({
+					url: './setting?apiKey=' + this.apiKey,
+					animationType: 'pop-in',
+					animationDuration: 200
+				})
 			}
 		},
 		onPageScroll(e) {
-			// 传入scrollTop值并触发所有easy-loadimage组件下的滚动监听事件
-			this.scrollTop = e.scrollTop;
-			this.scrollPower = false;
 			this.clientY = -999;
-			if(e.scrollTop < 50){
-				console.log("loadPage~~")
+			this.isSend = false;
+			if (e.scrollTop < this.scrollInfo.oldTop) {
+				this.scrollPower = false;
 			}
-			this.isShowFace = false;
-			clearTimeout(this.scrollTimeout);
-			this.scrollTimeout = setTimeout(() => {
-				this.scrollPower = true;
-			}, 1000)
+			this.scrollInfo.oldTop = e.scrollTop;
 		},
 		onLoad() {
-			this.initChat();
-			this.apiKey = getApp().globalData.apiKey;
+			this.apiKey = getApp().globalData.apiKey || uni.getStorageSync('apiKey');
 			this.data = getApp().globalData.data || uni.getStorageSync('userData');
-			console.log(this.data)
-		},
-		created() {
+			this.setting = uni.getStorageSync('setting') || {
+				JoinChatTime: 30,
+				ImageLoadHome: "https://pwl.yuis.cc/GetImage?url="
+			};
+			if (!this.apiKey || !this.data) {
+				uni.reLaunch({
+					url: '/pages/index/index'
+				})
+				return;
+			}
 			this.getPage(1);
 			this.getFaceList();
+			this.initChat();
 			// this.getUserEmotions();
 			let that = this;
 			uni.onSocketClose(function(res) {
 				console.log('WebSocket 已关闭！');
+				that.isSocketClose = true;
 				that.JoinChat = setInterval(() => {
-					console.log("尝试重连WebSocket");
-					that.initChat()
-				}, 30000)
+					that.JoinChatTime--;
+					console.log(`${that.JoinChatTime}s后尝试重连WebSocket`);
+					if (that.JoinChatTime == 0) {
+						that.initChat()
+						that.JoinChatTime = that.setting.JoinChatTime || 30;
+					}
+				}, 1000)
 			});
 			setInterval(() => {
 				this.changeHuaji()
 			}, 5000)
+			uni.onKeyboardHeightChange(res => {
+				if (res.height == 0) {
+					this.isShowFace = false;
+					this.isSend = false;
+				}
+			})
+			// this.getUserLiveness();
+			// setTimeout(()=>{
+			// 	this.getUserLiveness();
+			// },Math.random() * 30000 + 30000)
 		},
 		methods: {
+			getUserLiveness(){
+				getLiveness({
+					apiKey: this.apiKey
+				}).then(res=>{
+					this.liveness = res.liveness;
+				})
+			},
 			deleteMessage(oId) {
 				deleteMsg({
 					oId: oId,
 					apiKey: this.apiKey
 				}).then(res => {
 					console.log(res)
+				})
+			},
+			getHistoryMsg() {
+				if (this.isHistory) {
+					return;
+				}
+				this.isHistory = true;
+				this.nowPage = this.nowPage + 1;
+				getMorePage({
+					page: this.nowPage,
+					apiKey: this.apiKey
+				}).then(res => {
+					this.isHistory = false;
+					uni.stopPullDownRefresh()
+					if (res.code == 0) {
+						let info = res.data;
+						info.reverse();
+						info.forEach(msg => {
+							// #ifdef H5
+							let userAvatar = encodeURI(msg.userAvatarURL)
+							userAvatar = btoa(userAvatar);
+							msg.userAvatarURL = `${this.setting.ImageLoadHome+userAvatar}`
+							// #endif
+							if (this.isJSON(msg.content)) {
+								msg.content = JSON.parse(msg.content)
+								msg.isMoney = true;
+							}
+							this.content.forEach(items => {
+								if (items.oId == msg.oId) {
+									msg.hide = true
+								}
+							})
+						})
+						this.content = info.concat(this.content)
+					}
 				})
 			},
 			longTapEvent(index) {
@@ -243,6 +350,14 @@
 			},
 			onInputFocus() {
 				this.clientY = -999;
+				this.scrollPower = true;
+				this.scrollToBottom()
+			},
+			keyboardChange(e) {
+				if (e.detail.detail == 0) {
+					this.isSend = false;
+					this.isShowFace = false;
+				}
 			},
 			changeHuaji() {
 				this.emojeSrc = `../../static/icon/huaji${Math.ceil(Math.random()*6)}.png`
@@ -260,7 +375,11 @@
 					count: 1, //默认9
 					sizeType: ['compressed'], //可以指定是原图还是压缩图，默认二者都有
 					success: function(res) {
+						uni.showLoading({
+							title: '上传中...'
+						})
 						upload(res.tempFilePaths[0]).then(result => {
+							uni.hideLoading()
 							if (result.statusCode == 200) {
 								let urlList = JSON.parse(result.data);
 								urlList = urlList.data.succMap;
@@ -269,6 +388,11 @@
 									that.msg = that.msg + ` ![图片表情](${urlList[key]})`
 								}
 								that.isSend = true;
+							} else {
+								uni.showToast({
+									title: "图片上传失败！",
+									icon: "none"
+								})
 							}
 						})
 					}
@@ -287,13 +411,13 @@
 							items = btoa(items);
 							// #ifdef H5
 							this.face.push({
-								url: `https://pwl.yuis.cc/GetImage?url=${items}`,
+								url: `${this.setting.ImageLoadHome+items}`,
 								preUrl: item
 							})
 							// #endif
 							// #ifdef APP-PLUS
 							this.face.push({
-								url: `https://pwl.yuis.cc/GetImage?url=${items}`,
+								url: `${this.setting.ImageLoadHome+items}`,
 								preUrl: item
 							})
 							// #endif
@@ -313,8 +437,18 @@
 				this.isShowFace = !this.isShowFace;
 			},
 			showLink(e) {
-				if (e.class && e.class == "name-at") {
+				let linkInfo = e;
+				// console.log(linkInfo)
+				if (linkInfo.class && linkInfo.class == "name-at") {
 					this.toUser(e["aria-label"])
+				}
+				if (linkInfo.target && linkInfo.target == "_blank") {
+					// #ifdef APP-PLUS 
+					plus.runtime.openURL(linkInfo.href);
+					// #endif
+					// #ifdef H5
+					window.open(linkInfo.href)
+					// #endif
 				}
 			},
 			toUser(userName) {
@@ -329,6 +463,7 @@
 				if (page == 1) {
 					this.content = [];
 				}
+				this.scrollPower = false;
 				getMorePage({
 					page: page,
 					apiKey: this.apiKey
@@ -340,10 +475,11 @@
 							// #ifdef H5
 							let userAvatar = encodeURI(msg.userAvatarURL)
 							userAvatar = btoa(userAvatar);
-							msg.userAvatarURL = `https://pwl.yuis.cc/GetImage?url=${userAvatar}`
+							msg.userAvatarURL = `${this.setting.ImageLoadHome+userAvatar}`
 							// #endif
 							this.filterMsg(msg)
 						})
+						this.scrollPower = true;
 						this.scrollToBottom()
 					}
 				})
@@ -354,7 +490,7 @@
 					oId: oId,
 					apiKey: that.apiKey
 				}).then(res => {
-					console.log(res)
+					// console.log(res)
 					this.redpacketData = res;
 
 					let money = this.redpacketData.who.find(w => w.userName == this.data.userName);
@@ -396,18 +532,23 @@
 				})
 			},
 			SendMsg(msg) {
+				if (this.isSending) {
+					return;
+				}
 				let that = this;
 				let content = that.msg || msg;
 				this.isShowFace = false;
+				this.isSending = true;
 				if (content && content.trim() == "") {
 					return;
 				}
-
 				send({
 					content: content,
 					apiKey: that.apiKey
 				}).then(res => {
 					that.msg = "";
+					that.isSending = false;
+					that.scrollPower = true;
 				})
 			},
 			initChat() {
@@ -415,6 +556,7 @@
 				var socketTask = uni.connectSocket({
 					url: WS.channel,
 					success: (res) => {
+						that.isSocketClose = false;
 						console.log("WebSocket 连接成功！")
 						clearInterval(that.JoinChat);
 					},
@@ -423,38 +565,44 @@
 					}
 				});
 				socketTask.onMessage(function(res) {
-					let msg = JSON.parse(res.data)
-					switch (msg.type) {
-						case "online": //在线人数
-							uni.setStorageSync('users', JSON.stringify(msg.users))
-							// uni.setNavigationBarTitle({
-							// 	title: `摸鱼派-聊天室(${msg.onlineChatCnt})`
-							// })
-							break;
-						case "revoke": //撤回
-							for (let i = 0; i < that.content.length; i++) {
-								let c = that.content[i];
-								if (c.oId != msg.oId) continue;
-								that.content.splice(i, 1);
-								break;
-							}
-							break;
-						case "msg": //消息
-							// #ifdef H5
-							let userAvatar = encodeURI(msg.userAvatarURL)
-							userAvatar = btoa(userAvatar);
-							msg.userAvatarURL = `https://pwl.yuis.cc/GetImage?url=${userAvatar}`
-							// #endif
-							that.filterMsg(msg)
-							if (that.content.length > 500) {
-								that.getPage(1)
-							}
-							break;
-						case "redPacketStatus":
-							that.content.push(msg);
-							break;
-					}
+					that.wsMessage(res)
 				})
+			},
+			wsMessage(res) {
+				let msg = JSON.parse(res.data)
+				switch (msg.type) {
+					case "online": //在线人数
+						uni.setStorageSync('users', JSON.stringify(msg.users))
+						// uni.setNavigationBarTitle({
+						// 	title: `摸鱼派-聊天室(${msg.onlineChatCnt})`
+						// })
+						break;
+					case "revoke": //撤回
+						for (let i = 0; i < this.content.length; i++) {
+							let c = this.content[i];
+							if (c.oId != msg.oId) continue;
+							this.content.splice(i, 1);
+							break;
+						}
+						break;
+					case "msg": //消息
+						if (!this.scrollPower && !this.isShowToBottom) {
+							this.isShowToBottom = true;
+						}
+						// #ifdef H5
+						let userAvatar = encodeURI(msg.userAvatarURL)
+						userAvatar = btoa(userAvatar);
+						msg.userAvatarURL = `${this.setting.ImageLoadHome+userAvatar}`
+						// #endif
+						this.filterMsg(msg)
+						if (this.content.length > 500) {
+							this.getPage(1)
+						}
+						break;
+					case "redPacketStatus":
+						this.content.push(msg);
+						break;
+				}
 			},
 			filterMsg(msg) {
 				let that = this;
@@ -470,15 +618,13 @@
 					msg.content = msg.content.replace(/<img [^>]*src=['"]([^'"]+)[^>]*>/gi, function(match, capture) {
 						let url = encodeURI(capture);
 						url = btoa(url);
-						let imgUrl = `https://pwl.yuis.cc/GetImage?url=${url}`;
+						let imgUrl = `${ that.setting.ImageLoadHome + url}`;
 						return `<img src="${imgUrl}" alt="图片表情" />`
 					});
 					// #endif
 					this.content.push(msg)
-					this.scrollToBottom()
 				} else {
 					this.content.push(msg)
-					this.scrollToBottom()
 				}
 				if (!msg.isMoney) {
 					this.secondMsg = this.firstMsg;
@@ -501,9 +647,14 @@
 					}
 				}
 			},
-			scrollToBottom: function() {
+			toBottom() {
+				this.scrollPower = true;
+				this.isShowToBottom = false;
+				this.scrollToBottom();
+			},
+			scrollToBottom() {
 				if (this.scrollPower) {
-					let query = wx.createSelectorQuery()
+					let query = uni.createSelectorQuery()
 					query.select('.contentBox').boundingClientRect()
 					query.selectViewport().scrollOffset()
 					query.exec(res => {
@@ -526,8 +677,6 @@
 		width: 100vw;
 		height: 100%;
 		background-color: #3b3e43;
-		position: relative;
-		z-index: 1;
 	}
 
 	.userAvatar {
@@ -556,16 +705,11 @@
 		justify-content: space-between;
 		align-items: flex-end;
 	}
-	.contentHeight{
-		height: calc(100% - 100px);
-		padding: 15px 10px;
-		box-sizing: border-box;
-		overflow-y: auto;
-	}
 
 	.contentBox {
-		padding-bottom: 100px;
-		overflow-y: auto;
+		min-height: 100%;
+		padding: 15px 10px 80px;
+		box-sizing: border-box;
 	}
 
 	.msgBox {
@@ -598,10 +742,10 @@
 		max-width: 60vw;
 		min-height: 15px;
 		margin: 5px 0;
-		padding: 5px 10px;
+		padding: 8px 10px;
 		border-radius: 5px;
 		background-color: #fff;
-		/* overflow: hidden; */
+		word-break: break-word;
 	}
 
 	.msgContent::before {
@@ -640,22 +784,24 @@
 	}
 
 	.sendBox {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		z-index: 1000;
 		width: 100vw;
 		min-height: 100px;
 		padding: 0 15px;
 		background: #fff;
 		box-sizing: border-box;
-		position: fixed;
-		bottom: 0;
-		leftleft: 0;
 	}
-
-	.sendBox .sendTextBox {
-		display: flex;
-		justify-content: space-between;
-		position: relative;
+	.livenessLine{
+		position: absolute;
+		top: -1px;
+		left: 0;
+		width: 0;
+		height: 2px;
+		background: red;
 	}
-
 	.menuBox {
 		display: flex;
 		height: 42px;
@@ -665,15 +811,15 @@
 	}
 
 	.sendBtn {
-		width: 60px;
+		position: absolute;
+		right: 5vw;
+		top: 10px;
+		z-index: 10;
 		height: 30px;
 		line-height: 30px;
 		font-size: 14px;
 		background-color: #60b044;
 		color: #fff;
-		position: absolute;
-		bottom: 5px;
-		right: 0px;
 	}
 
 	.iconBtn {
@@ -685,17 +831,13 @@
 	}
 
 	.chat-input {
-		width: calc(100% - 60px);
-		/* height: calc(100% - 42px); */
-		/* min-height: 30px; */
-		max-height: calc(100% - 42px);
+		width: 100%;
+		height: calc(100% - 42px);
 		padding: 10px;
+		padding-right: 60px;
 		line-height: 30px;
 		box-sizing: border-box;
-	}
-
-	.chat-input uni-textarea {
-		width: 100%;
+		overflow-y: scroll;
 	}
 
 	.red-packet {
@@ -902,7 +1044,7 @@
 
 	.faceBox {
 		display: flex;
-		justify-content: flex-start;
+		justify-content: space-between;
 		align-items: center;
 		flex-wrap: wrap;
 		width: 100%;
@@ -939,6 +1081,39 @@
 		height: 20px;
 		line-height: 20px;
 	}
+
+	.backTobottom {
+		position: fixed;
+		z-index: 1001;
+		bottom: 100px;
+		right: 15px;
+		width: 100px;
+		height: 30px;
+		line-height: 30px;
+		font-size: 12px;
+		text-align: center;
+		color: #4CD964;
+		background: #fff;
+		border-bottom: 1px solid #333333;
+	}
+
+	.SocketCloseMsg {
+		position: fixed;
+		left: 0;
+		z-index: 1001;
+		width: 100%;
+		height: 30px;
+		line-height: 30px;
+		font-size: 12px;
+		text-align: center;
+		color: #FFFFFF;
+		background: #f56c6c;
+	}
+
+	.textLink {
+		text-decoration: underline;
+		margin-left: 5px;
+	}
 </style>
 <style>
 	.contentBox>>>a {
@@ -956,5 +1131,9 @@
 		border-left: .25em solid #eaecef;
 		padding-left: 1em;
 		margin: 5px 0;
+	}
+
+	.contentBox>>>ol {
+		padding-left: 20px;
 	}
 </style>
