@@ -60,7 +60,8 @@
 					apiKey: this.apiKey
 				}).then(res => {
 					uni.showToast({
-						title: `领取成功，积分:` + res.sum
+						title: `领取成功，积分:` + res.sum,
+						icon:"none"
 					})
 				})
 			},

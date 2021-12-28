@@ -5,7 +5,8 @@
 			WebSocket已断开：{{JoinChatTime}}s后重新连接 <text class="textLink" @click="initChat()">点击重连</text>
 		</view>
 		<view class="contentBox" v-if="content.length > 0">
-			<view class="msgInfo" v-for="(item,index) in content" :key="index"
+			<view class="msgInfo" v-for="(item,index) in content"
+				:key="(item.type || 'msg') + '_' + item.oId + (item.whoGot || '')"
 				:class="{isYou : (data.userName == item.userName ? true : false)}">
 				<template v-if="item.type != 'redPacketStatus' && !item.hide">
 					<image v-if="data.userName != item.userName" :src='item.userAvatarURL' mode="widthFix"
@@ -70,10 +71,22 @@
 				<view class="iconBtn" @click="getImage()">
 					<image src="../../static/icon/tupian.png" mode="heightFix"></image>
 				</view>
+				<view class="iconBtn" @click="toggleVoice()">
+					<image src="../../static/icon/yuyin.png" mode="heightFix"></image>
+				</view>
 			</view>
+			<!-- 表情包 -->
 			<view class="faceBox" v-show="isShowFace">
 				<view class="face-item" v-for="(item,index) in face" :key="index">
 					<image class="face-item" :src="item.url" mode="aspectFit" @click="sendFace(item.preUrl)"></image>
+				</view>
+			</view>
+			<!-- 语音 -->
+			<view class="faceBox" v-show="isSendVoice">
+				<view class="voice-btn">
+					<view class="voice-time">{{voiceTime}}s</view>
+					<image class="voice-img" src="../../static/icon/yuyinbtn.png" mode="aspectFit"
+						@touchstart="toVoice(0)" @touchend="toVoice(1)"></image>
 				</view>
 			</view>
 			<button type="default" class="sendBtn" @touchend.prevent="SendMsg()">发送</button>
@@ -94,7 +107,8 @@
 						<image class="rpi-user-img" :src="redpacketData.info.userAvatarURL" mode="aspectFill"></image>
 						{{redpacketData.info.userName}}'s的红包
 					</view>
-					<view class="rpi-recivers" v-if="redpacketData.recivers && redpacketData.recivers.length > 0">
+					<view class="rpi-recivers"
+						v-if="redpacketData.recivers && redpacketData.recivers.length > 0 && redpacketData.recivers[0] != ''">
 						这个红包属于：{{redpacketData.recivers.join(",")}}</view>
 					<view class="rpi-recivers" v-else>{{redpacketData.info.msg}}</view>
 					<view class="rpi-msg">{{redpacketData.msg}}</view>
@@ -116,8 +130,8 @@
 			</view>
 		</view>
 		<!-- 回到最新消息 -->
-		<view class="backTobottom" v-if="isShowToBottom" :style="{bottom:isShowFace ? '300px' : '100px'}"
-			@click="toBottom()">
+		<view class="backTobottom" v-if="isShowToBottom"
+			:style="{bottom:(isShowFace || isSendVoice) ? '302px' : '102px'}" @click="toBottom()">
 			查看最新消息
 		</view>
 
@@ -137,6 +151,8 @@
 		deleteMsg,
 		getLiveness
 	} from '../../utils/api.js'
+	const recorderManager = uni.getRecorderManager();
+	const innerAudioContext = uni.createInnerAudioContext();
 	export default {
 		components: {
 			mpHtml
@@ -184,6 +200,7 @@
 				nowPage: 1,
 				isSending: false,
 				isHistory: false,
+				isSendVoice: false,
 				isShowToBottom: false,
 				isSocketClose: false,
 				scrollTimeout: null,
@@ -194,7 +211,10 @@
 				scrollInfo: {
 					oldTop: 99999
 				},
-				liveness: 0
+				liveness: 0,
+				voicePath: "",
+				voiceTimeout: null,
+				voiceTime: 0,
 			}
 		},
 		onPullDownRefresh() {
@@ -255,26 +275,78 @@
 					}
 				}, 1000)
 			});
-			setInterval(() => {
-				this.changeHuaji()
-			}, 5000)
+			recorderManager.onStop(function(res) {
+				that.voicePath = res.tempFilePath;
+				this.voiceTime = 0;
+				uni.showLoading({
+					title: '发送中...'
+				})
+				upload(res.tempFilePath).then(result => {
+					uni.hideLoading()
+					if (result.statusCode == 200) {
+						let urlList = JSON.parse(result.data);
+						urlList = urlList.data.succMap;
+						console.log(urlList)
+						for (let key in urlList) {
+							that.msg =
+								` <audio controls class="userVoice"> <source src="${urlList[key]}" type="audio/mpeg"></audio>`
+						}
+						that.isSend = true;
+					} else {
+						uni.showToast({
+							title: "语音上传失败！",
+							icon: "none"
+						})
+					}
+				})
+			});
+			this.emojeSrc = `../../static/icon/huaji${Math.ceil(Math.random()*6)}.png`
 			uni.onKeyboardHeightChange(res => {
 				if (res.height == 0) {
 					this.isShowFace = false;
 					this.isSend = false;
+					this.isSendVoice = false;
 				}
 			})
-			// this.getUserLiveness();
-			// setTimeout(()=>{
-			// 	this.getUserLiveness();
-			// },Math.random() * 30000 + 30000)
+			setTimeout(() => {
+				this.getUserLiveness();
+			}, Math.random() * 30000 + 30000)
 		},
 		methods: {
-			getUserLiveness(){
+			toVoice(index) {
+				if (index == 0) {
+					console.log("录音开始")
+					recorderManager.start();
+					this.voiceTimeout = setInterval(() => {
+						this.voiceTime = this.voiceTime + 1;
+						if (this.voiceTime > 15) {
+							recorderManager.stop();
+							clearInterval(this.voiceTimeout)
+						}
+					},1000)
+				} else {
+					console.log("录音结束")
+					clearInterval(this.voiceTimeout)
+					recorderManager.stop();
+				}
+			},
+			getUserLiveness() {
+				let liveness = uni.getStorageSync("liveness");
+				if (liveness) {
+					liveness = JSON.parse(liveness)
+					if (new Date().getTime() - liveness.time < 1 * 60 * 1000) {
+						this.liveness = liveness.liveness;
+						return;
+					}
+				}
 				getLiveness({
 					apiKey: this.apiKey
-				}).then(res=>{
+				}).then(res => {
 					this.liveness = res.liveness;
+					uni.setStorageSync("liveness", JSON.stringify({
+						liveness: res.liveness,
+						time: new Date().getTime()
+					}))
 				})
 			},
 			deleteMessage(oId) {
@@ -347,6 +419,7 @@
 			noSend() {
 				this.isSend = false;
 				this.isShowFace = false;
+				this.isSendVoice = false;
 			},
 			onInputFocus() {
 				this.clientY = -999;
@@ -357,10 +430,8 @@
 				if (e.detail.detail == 0) {
 					this.isSend = false;
 					this.isShowFace = false;
+					this.isSendVoice = false;
 				}
-			},
-			changeHuaji() {
-				this.emojeSrc = `../../static/icon/huaji${Math.ceil(Math.random()*6)}.png`
 			},
 			toRedPacket() {
 				uni.navigateTo({
@@ -431,10 +502,14 @@
 			sendFace(url) {
 				this.msg = this.msg + ` ![图片表情](${url})`;
 				this.isShowFace = false;
+				this.isSendVoice = false;
 				this.isSend = true;
 			},
 			toggleFace() {
 				this.isShowFace = !this.isShowFace;
+			},
+			toggleVoice() {
+				this.isSendVoice = !this.isSendVoice;
 			},
 			showLink(e) {
 				let linkInfo = e;
@@ -498,7 +573,8 @@
 					let specify = (this.redpacketData.recivers && this.redpacketData.recivers.length && this
 						.redpacketData.recivers.indexOf(this.data.userName) >= 0)
 					let msg = "";
-					if (this.redpacketData.recivers && this.redpacketData.recivers.length && !specify) {
+					if (this.redpacketData.recivers && this.redpacketData.recivers.length && !specify && this
+						.redpacketData.recivers[0] != "") {
 						msg = "会错意了"
 					} else if (!money) {
 						msg = "错过一个亿";
@@ -506,6 +582,8 @@
 						msg =
 							money.userMoney == 0 ?
 							"抢了个寂寞" :
+							money.userMoney < 0 ?
+							"被反抢了吧~" :
 							`${money.userMoney} 积分`;
 					}
 					let moneyList = this.redpacketData.who;
@@ -538,6 +616,7 @@
 				let that = this;
 				let content = that.msg || msg;
 				this.isShowFace = false;
+				this.isSendVoice = false;
 				this.isSending = true;
 				if (content && content.trim() == "") {
 					return;
@@ -794,7 +873,8 @@
 		background: #fff;
 		box-sizing: border-box;
 	}
-	.livenessLine{
+
+	.livenessLine {
 		position: absolute;
 		top: -1px;
 		left: 0;
@@ -802,6 +882,7 @@
 		height: 2px;
 		background: red;
 	}
+
 	.menuBox {
 		display: flex;
 		height: 42px;
@@ -1009,7 +1090,7 @@
 	}
 
 	.rpl-tag {
-		display: inline-block;
+		display: inline-table;
 		padding: 0 5px;
 		line-height: 20px;
 		height: 20px;
@@ -1028,11 +1109,13 @@
 
 	.is0 {
 		border-color: #D5D5D5;
+		background-color: rgba(255, 255, 255, .2);
 		color: #faa;
 	}
 
 	.isNeg {
 		border-color: #D5D5D5;
+		background-color: rgba(255, 255, 255, .2);
 		color: #000;
 	}
 
@@ -1058,6 +1141,22 @@
 		min-height: 50px;
 		max-height: 50px;
 		margin: 5px;
+	}
+
+	.voice-btn {
+		width: 70px;
+		height: 100px;
+		margin: 0 auto;
+	}
+
+	.voice-time {
+		text-align: center;
+	}
+
+	.voice-img {
+		width: 70px;
+		height: 70px;
+
 	}
 
 	.longTap-list {
