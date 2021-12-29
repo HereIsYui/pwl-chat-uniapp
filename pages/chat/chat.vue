@@ -139,7 +139,8 @@
 </template>
 
 <script>
-	import mpHtml from 'mp-html/dist/uni-app/components/mp-html/mp-html'
+	import mpHtml from '../../components/mp-html/mp-html'
+	import permision from "../../utils/permission.js"
 	import {
 		upload,
 		getMorePage,
@@ -215,6 +216,7 @@
 				voicePath: "",
 				voiceTimeout: null,
 				voiceTime: 0,
+				isVoice: false,
 			}
 		},
 		onPullDownRefresh() {
@@ -277,7 +279,8 @@
 			});
 			recorderManager.onStop(function(res) {
 				that.voicePath = res.tempFilePath;
-				this.voiceTime = 0;
+				that.voiceTime = 0;
+				that.isVoice = false;
 				uni.showLoading({
 					title: '发送中...'
 				})
@@ -289,7 +292,7 @@
 						console.log(urlList)
 						for (let key in urlList) {
 							that.msg =
-								` <audio controls class="userVoice"> <source src="${urlList[key]}" type="audio/mpeg"></audio>`
+								` <audio controls> <source src="${urlList[key]}?key=userVoice" type="audio/mpeg"></audio>`
 						}
 						that.isSend = true;
 					} else {
@@ -315,15 +318,27 @@
 		methods: {
 			toVoice(index) {
 				if (index == 0) {
-					console.log("录音开始")
-					recorderManager.start();
-					this.voiceTimeout = setInterval(() => {
-						this.voiceTime = this.voiceTime + 1;
-						if (this.voiceTime > 15) {
-							recorderManager.stop();
-							clearInterval(this.voiceTimeout)
+					permision.requestAndroidPermission("android.permission.RECORD_AUDIO").then(viocePower=>{
+						if (viocePower == 1) {
+							if (!this.isVoice) {
+								console.log("录音开始")
+								this.isVoice = true;
+								recorderManager.start();
+								this.voiceTimeout = setInterval(() => {
+									this.voiceTime = this.voiceTime + 1;
+									if (this.voiceTime > 14) {
+										recorderManager.stop();
+										clearInterval(this.voiceTimeout)
+									}
+								}, 1000)
+							}
+						} else {
+							uni.showToast({
+								title: "没有麦克风权限",
+								icon: "none"
+							})
 						}
-					},1000)
+					})
 				} else {
 					console.log("录音结束")
 					clearInterval(this.voiceTimeout)
@@ -652,9 +667,9 @@
 				switch (msg.type) {
 					case "online": //在线人数
 						uni.setStorageSync('users', JSON.stringify(msg.users))
-						// uni.setNavigationBarTitle({
-						// 	title: `摸鱼派-聊天室(${msg.onlineChatCnt})`
-						// })
+						uni.setNavigationBarTitle({
+							title: `摸鱼派-聊天室(${msg.onlineChatCnt})`
+						})
 						break;
 					case "revoke": //撤回
 						for (let i = 0; i < this.content.length; i++) {
