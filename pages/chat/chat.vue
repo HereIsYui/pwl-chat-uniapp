@@ -19,14 +19,20 @@
 								</view>
 								<view class="userName" v-else>{{item.userName}}</view>
 							</template>
-							<view v-if="item.isMoney" @click="getMoney(item.oId)">
+							<view v-if="item.isMoney" @click="getMoney(item.oId)" class="wx-rp">
 								<view class="red-packet">
 									<view class="rp-header"></view>
 									<view class="rp-main">
 										<view class="open">开</view>
 										<view class="rp-msg">
-											<view>{{item.content.msg}}</view>
-											<view style="font-weight: bold;">{{defaultTitle[item.content.type]}}</view>
+											<view class="rp-msg-inner">
+												<image class="rp-icon-wx" src="../../static/icon/hongbao.png"
+													mode="widthFix"></image>
+												<view>{{item.content.msg}}</view>
+											</view>
+											<view class="rp-type" style="font-weight: bold;">
+												{{defaultTitle[item.content.type]}}
+											</view>
 										</view>
 									</view>
 								</view>
@@ -35,7 +41,12 @@
 								<mp-html @load="scrollToBottom()" container-style="MessageBox" @ready="scrollToBottom()"
 									:copy-link="false" :content="item.content" :show-img-menu="false"
 									@linktap="showLink" />
-								<!-- <rich-text :nodes="item.content" :preview="true" @itemclick="showLink"></rich-text> -->
+							</view>
+							<view class="db-users" v-if="item.dbUser.length">
+								<view class="db-user" v-for="db in item.dbUser" :key="db.oId">
+									<image class="db-avatar" :src="db.userAvatarURL"></image>
+								</view>
+								<view class="db-word">也这么说</view>
 							</view>
 
 						</view>
@@ -94,26 +105,26 @@
 		<!-- 右键菜单 -->
 		<view class="longTap-list" :style="{top:clientY + 'px',left:clientX + 'px'}">
 			<view class="longTap-item" @click="longTapEvent(0)">复读机</view>
-			<view class="longTap-item" @click="longTapEvent(1)"
-				v-if="data.userRole =='纪律委员' || data.userRole =='OP' || data.userRole =='管理员'">撤回</view>
+			<view class="longTap-item" @click="longTapEvent(1)" v-if="['纪律委员', 'OP','管理员'].indexOf(data.userRole) >= 0">
+				撤回</view>
 			<view class="longTap-item" @click="longTapEvent(1)" v-else-if="data.userName == longData.userName">撤回</view>
 			<view class="longTap-item" @click="longTapEvent(2)">引用</view>
 		</view>
 		<!-- 红包 -->
 		<view class="redPacketBg" v-show="showRedPacketData" @click.stop="showRedPacketData = false">
 			<view class="redPacketbox">
-				<view class="redPacketInfo">
-					<view class="rpi-user">
-						<image class="rpi-user-img" :src="redpacketData.info.userAvatarURL" mode="aspectFill"></image>
-						{{redpacketData.info.userName}}'s的红包
+				<view class="rpiInfo">
+					<image class="rpi-user-img" :src="redpacketData.info.userAvatarURL" mode="aspectFill"></image>
+					<view>
+						<view class="rpi-user">{{redpacketData.info.userName}}'s的红包</view>
+						<view class="rpi-recivers"
+							v-if="redpacketData.recivers && redpacketData.recivers.length > 0 && redpacketData.recivers[0] != ''">
+							这个红包属于：{{redpacketData.recivers.join(",")}}</view>
+						<view class="rpi-recivers" v-else>{{redpacketData.info.msg}}</view>
+						<view class="rpi-msg">{{redpacketData.msg}}</view>
 					</view>
-					<view class="rpi-recivers"
-						v-if="redpacketData.recivers && redpacketData.recivers.length > 0 && redpacketData.recivers[0] != ''">
-						这个红包属于：{{redpacketData.recivers.join(",")}}</view>
-					<view class="rpi-recivers" v-else>{{redpacketData.info.msg}}</view>
-					<view class="rpi-msg">{{redpacketData.msg}}</view>
-					<view class="rpi-count">总计：{{redpacketData.info.got}}/{{redpacketData.info.count}}</view>
 				</view>
+				<view class="rpi-count">已领取：{{redpacketData.info.got}}/{{redpacketData.info.count}}个</view>
 				<view class="redPacketList">
 					<view class="rpl-item" v-for="(item,index) in redpacketData.who" :key="index">
 						<image class="rpl-img" :src="item.avatar" mode="aspectFill"></image>
@@ -250,10 +261,13 @@
 		onLoad() {
 			this.apiKey = getApp().globalData.apiKey || uni.getStorageSync('apiKey');
 			this.data = getApp().globalData.data || uni.getStorageSync('userData');
-			this.setting = uni.getStorageSync('setting') || {
-				JoinChatTime: 30,
-				ImageLoadHome: "https://pwl.yuis.cc/GetImage?url="
-			};
+			let setting = uni.getStorageSync('setting');
+			try {
+				setting = JSON.parse(setting);
+				this.setting = setting
+			} catch (e) {
+				//TODO handle the exception
+			}
 			if (!this.apiKey || !this.data) {
 				uni.reLaunch({
 					url: '/pages/index/index'
@@ -318,7 +332,7 @@
 		methods: {
 			toVoice(index) {
 				if (index == 0) {
-					permision.requestAndroidPermission("android.permission.RECORD_AUDIO").then(viocePower=>{
+					permision.requestAndroidPermission("android.permission.RECORD_AUDIO").then(viocePower => {
 						if (viocePower == 1) {
 							if (!this.isVoice) {
 								console.log("录音开始")
@@ -402,10 +416,25 @@
 									msg.hide = true
 								}
 							})
+
 						})
+						info = this.mergeDoubleMsg(info)
 						this.content = info.concat(this.content)
 					}
 				})
+			},
+			mergeDoubleMsg(contents) {
+				contents.forEach((c, i) => {
+					contents[i].dbUser = []
+					if (!contents[i - 1]) return;
+					if (this.isJSON(contents[i])) return;
+					if (c.content != contents[i - 1].content) return;
+					contents[i - 1].hide = true;
+					contents[i].dbUser = contents[i - 1].dbUser || [];
+					contents[i - 1].dbUser = undefined;
+					contents[i].dbUser.splice(0, 0, contents[i - 1])
+				});
+				return contents.filter(c => !c.hide);
 			},
 			longTapEvent(index) {
 				this.clientY = -999;
@@ -495,18 +524,10 @@
 						list.forEach(item => {
 							let items = encodeURI(item)
 							items = btoa(items);
-							// #ifdef H5
 							this.face.push({
 								url: `${this.setting.ImageLoadHome+items}`,
 								preUrl: item
 							})
-							// #endif
-							// #ifdef APP-PLUS
-							this.face.push({
-								url: `${this.setting.ImageLoadHome+items}`,
-								preUrl: item
-							})
-							// #endif
 						})
 					} else {
 						console.log("===:error:===")
@@ -561,12 +582,17 @@
 					if (res.code == 0) {
 						let info = res.data;
 						info.reverse();
+						info = this.mergeDoubleMsg(info);
 						info.forEach(msg => {
 							// #ifdef H5
 							let userAvatar = encodeURI(msg.userAvatarURL)
 							userAvatar = btoa(userAvatar);
 							msg.userAvatarURL = `${this.setting.ImageLoadHome+userAvatar}`
 							// #endif
+							if (this.isJSON(msg.content)) {
+								msg.content = JSON.parse(msg.content)
+								msg.isMoney = true;
+							}
 							this.filterMsg(msg)
 						})
 						this.scrollPower = true;
@@ -692,6 +718,7 @@
 						if (this.content.length > 500) {
 							this.getPage(1)
 						}
+
 						break;
 					case "redPacketStatus":
 						this.content.push(msg);
@@ -700,7 +727,13 @@
 			},
 			filterMsg(msg) {
 				let that = this;
-				if (this.isJSON(msg.content)) {
+				msg.dbUser = msg.dbUser || [];
+				// console.log(this.content.length >= 2 && msg.content == this.content[this.content.length - 1].content)
+				if (msg.type == 'msg' && !this.isJSON(msg) && this.content.length >= 2 && msg.content == this.content[this
+						.content.length - 1].content) {
+					this.content[this.content.length - 1].dbUser = this.content[this.content.length - 1].dbUser || []
+					this.content[this.content.length - 1].dbUser.push(msg)
+				} else if (this.isJSON(msg.content)) {
 					msg.content = JSON.parse(msg.content)
 					msg.isMoney = true;
 					this.content.push(msg)
@@ -766,7 +799,7 @@
 		},
 	}
 </script>
-<style scoped>
+<style lang="scss" scoped>
 	.content {
 		width: 100vw;
 		height: 100%;
@@ -936,52 +969,149 @@
 		overflow-y: scroll;
 	}
 
-	.red-packet {
-		/* position: relative; */
-		color: #fff;
-		height: 200px;
-		margin: 10px auto 0;
-		width: 160px;
-		border-radius: 15px;
-		background: #c61a2f;
-		box-sizing: border-box;
-		box-shadow: 0 0 2px 2px #333;
-		overflow: hidden;
+	.qq-rp {
+		.red-packet {
+			color: #fff;
+			height: 200px;
+			margin: 10px auto 0;
+			width: 160px;
+			border-radius: 15px;
+			background: #eb4454;
+			box-sizing: border-box;
+			box-shadow: 0 0 2px 2px #333;
+			overflow: hidden;
+		}
+
+		.rp-header {
+			width: 160px;
+			height: 200px;
+			margin-top: -120px;
+			border-radius: 100%;
+			background: #d13c4a;
+		}
+
+		.rp-main {
+			width: 100%;
+			height: 100%;
+			text-align: center;
+		}
+
+		.red-packet .open {
+			width: 40px;
+			height: 40px;
+			color: #fff;
+			line-height: 40px;
+			font-size: 14px;
+			margin: -20px auto 20px;
+			background: #ffb03a;
+			border-radius: 100%;
+		}
+
+		.rp-msg {
+			padding: 0 10px;
+			box-sizing: border-box;
+
+			font-size: 12px;
+			.rp-icon-wx{
+				display: none;
+			}
+
+			.rp-msg-inner {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+		}
+
 	}
 
-	.rp-header {
-		/* position: absolute; */
-		width: 160px;
-		height: 200px;
-		margin-top: -120px;
-		border-radius: 100%;
-		background: #f94151;
+	.wx-rp {
+		.red-packet {
+			color: #fff;
+			height: 92px;
+			margin: 10px auto 0;
+			width: 220px;
+			border-radius: 5px;
+			background: #fa9c3e;
+			box-sizing: border-box;
+			box-shadow: 0 0 2px 2px #333;
+			// overflow: hidden;
+		}
+
+		.red-packet .open,
+		.rp-header {
+			display: none;
+		}
+
+		.rp-main {
+			width: 100%;
+			height: 100%;
+		}
+
+		.rp-msg {
+			font-size: 12px;
+
+			.rp-msg-inner {
+				position: relative;
+				display: flex;
+				padding: 10px;
+				height: 70px;
+				font-size: 16px;
+				box-sizing: border-box;
+				border: 1px solid #fa9c3e;
+				border-top-left-radius: 5px;
+				border-top-right-radius: 5px;
+				.rp-icon-wx{
+					width: 30px;
+				}
+			}
+
+			.rp-msg-inner::before {
+				content: "";
+				position: absolute;
+				left: -10px;
+				top: 10px;
+				width: 0;
+				height: 0;
+				border-right: 5px solid #fa9c3e;
+				border-top: 5px solid rgba(0, 0, 0, 0);
+				border-bottom: 5px solid rgba(0, 0, 0, 0);
+				border-left: 5px solid rgba(0, 0, 0, 0);
+			}
+
+			.rp-type {
+				padding: 0 10px;
+				height: 22px;
+				line-height: 22px;
+				color: #666;
+				box-sizing: border-box;
+				background-color: #fff;
+				border: 1px solid #f8f8f8;
+				border-bottom-left-radius: 5px;
+				border-bottom-right-radius: 5px;
+			}
+		}
+
 	}
 
-	.rp-main {
-		width: 100%;
-		height: 100%;
-		text-align: center;
-	}
-
-	.rp-msg {
-		padding: 0 10px;
-		box-sizing: border-box;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		font-size: 12px;
-	}
-
-	.red-packet .open {
-		width: 40px;
-		height: 40px;
-		color: #fff;
-		line-height: 40px;
-		font-size: 14px;
-		margin: -20px auto 20px;
-		background: #ffb03a;
-		border-radius: 100%;
+	.isYou {
+		.wx-rp {
+			.rp-msg {
+				.rp-msg-inner::before {
+					content: "";
+					position: absolute;
+					left: auto;
+					right: -10px;
+					top: 10px;
+					width: 0;
+					height: 0;
+					border-right: 5px solid rgba(0, 0, 0, 0);
+					border-top: 5px solid rgba(0, 0, 0, 0);
+					border-bottom: 5px solid rgba(0, 0, 0, 0);
+					border-left: 5px solid #fa9c3e;
+				}
+			}
+		}
 	}
 
 	.redPacketinfo {
@@ -1025,120 +1155,141 @@
 		height: 70vh;
 		box-sizing: border-box;
 		transform: translateX(-50%);
-		background: #fdf7eb;
-	}
-
-	.redPacketInfo {
-		width: 100%;
-		height: 130px;
-		text-align: center;
-		background: #f94151;
-		padding: 15px;
-		box-sizing: border-box;
-	}
-
-	.rpi-user {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		font-size: 14px;
-	}
-
-	.rpi-user-img {
-		width: 20px;
-		height: 20px;
-		margin-right: 5px;
-	}
-
-	.rpi-recivers {
-		font-size: 14px;
-	}
-
-	.rpi-msg {
-		font-size: 24px;
-	}
-
-	.rpi-count {
-		font-size: 12px;
-	}
-
-	.redPacketList {
-		width: 100%;
-		height: calc(100% - 130px);
-		overflow-y: scroll;
-		overflow-x: hidden;
-		padding: 15px;
-		box-sizing: border-box;
-	}
-
-	.rpl-item {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin: 5px 0;
-		padding: 5px;
 		background: #fff;
+
+		.rpiInfo {
+			display: flex;
+			width: 100%;
+			height: 130px;
+			background: #d13d4b;
+			padding: 15px;
+			box-sizing: border-box;
+
+			.rpi-user-img {
+				width: 50px;
+				height: 50px;
+				border-radius: 50%;
+				margin-right: 10px;
+			}
+
+			.rpi-user {
+				display: flex;
+				justify-content: flex-start;
+				align-items: center;
+				font-size: 14px;
+			}
+
+			.rpi-recivers {
+				font-size: 14px;
+			}
+
+			.rpi-msg {
+				font-size: 24px;
+			}
+		}
+
+		.rpi-count {
+			position: relative;
+			width: 100%;
+			font-size: 14px;
+			padding: 5px 10px;
+			box-sizing: border-box;
+			background-color: #ecedee;
+		}
+
+		.rpi-count::before {
+			content: "";
+			position: absolute;
+			left: 20px;
+			top: -20px;
+			width: 0;
+			height: 0;
+			border-right: 10px solid rgba(0, 0, 0, 0);
+			border-top: 10px solid rgba(0, 0, 0, 0);
+			border-bottom: 10px solid #ecedee;
+			border-left: 10px solid rgba(0, 0, 0, 0);
+		}
+
+		.redPacketList {
+			width: 100%;
+			height: calc(100% - 160px);
+			overflow-y: scroll;
+			overflow-x: hidden;
+			padding: 15px;
+			box-sizing: border-box;
+
+			.rpl-item {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin: 5px 0;
+				padding: 5px;
+				background: #fff;
+
+				.rpl-img {
+					width: 38px;
+					height: 38px;
+					border-radius: 5px;
+				}
+
+				.rpl-time {
+					font-size: 12px;
+					color: rgba(0, 0, 0, 0.38);
+				}
+
+				.rpl-info {
+					display: flex;
+					flex-direction: column;
+					justify-content: flex-start;
+					width: 65%;
+					text-align: left;
+					margin-left: 5px;
+				}
+
+				.rpl-tag {
+					display: inline-table;
+					padding: 0 5px;
+					line-height: 20px;
+					height: 20px;
+					max-width: 95px;
+					text-align: center;
+					font-size: 12px;
+					border-radius: 5px;
+					border: 1px solid #fff;
+				}
+
+				.isMax {
+					background-color: #60b044;
+					border-color: #5ca941;
+					color: #fff;
+				}
+
+				.is0 {
+					border-color: #D5D5D5;
+					background-color: rgba(255, 255, 255, .2);
+					color: #faa;
+				}
+
+				.isNeg {
+					border-color: #D5D5D5;
+					background-color: rgba(255, 255, 255, .2);
+					color: #000;
+				}
+
+				.rpl-money {
+					width: 25%;
+					font-size: 12px;
+					text-align: right;
+				}
+			}
+
+			.rpl-item:not(:last-child) {
+				border-bottom: 1px dotted #999;
+			}
+		}
 	}
 
-	.rpl-item:not(:last-child) {
-		border-bottom: 1px dotted #999;
-	}
 
-	.rpl-img {
-		width: 38px;
-		height: 38px;
-		border-radius: 5px;
-	}
-
-	.rpl-time {
-		font-size: 12px;
-		color: rgba(0, 0, 0, 0.38);
-	}
-
-	.rpl-info {
-		display: flex;
-		flex-direction: column;
-		justify-content: flex-start;
-		width: 65%;
-		text-align: left;
-		margin-left: 5px;
-	}
-
-	.rpl-tag {
-		display: inline-table;
-		padding: 0 5px;
-		line-height: 20px;
-		height: 20px;
-		max-width: 95px;
-		text-align: center;
-		font-size: 12px;
-		border-radius: 5px;
-		border: 1px solid #fff;
-	}
-
-	.isMax {
-		background-color: #60b044;
-		border-color: #5ca941;
-		color: #fff;
-	}
-
-	.is0 {
-		border-color: #D5D5D5;
-		background-color: rgba(255, 255, 255, .2);
-		color: #faa;
-	}
-
-	.isNeg {
-		border-color: #D5D5D5;
-		background-color: rgba(255, 255, 255, .2);
-		color: #000;
-	}
-
-	.rpl-money {
-		width: 25%;
-		font-size: 12px;
-		text-align: right;
-	}
 
 	.faceBox {
 		display: flex;
@@ -1227,6 +1378,32 @@
 	.textLink {
 		text-decoration: underline;
 		margin-left: 5px;
+	}
+
+	.db-users {
+		padding: 5px 0 5px 10px;
+		max-width: 70vw;
+		display: flex;
+		justify-content: flex-start;
+		align-items: center;
+		flex-wrap: wrap;
+
+		.db-user {
+			margin-left: -5px;
+		}
+
+		.db-avatar {
+			width: 25px;
+			height: 25px;
+			border-radius: 50%;
+		}
+
+		.db-word {
+			font-size: 10px;
+			color: #fff;
+			display: inline-block;
+			padding-left: 5px;
+		}
 	}
 </style>
 <style>

@@ -28,17 +28,46 @@
 		},
 		methods: {
 			init() {
-				let apiKey = uni.getStorageSync('apiKey');
-				let data = uni.getStorageSync('userData');
-
-				if (!apiKey) {
+				try{
+					let apiKey = uni.getStorageSync('apiKey');
+					let data = uni.getStorageSync('userData');
+					
+					if (!apiKey) {
+						// 检查是否有保存的账号密码
+						let nameOrEmail = uni.setStorageSync("nameOrEmail")
+						let userPassword = uni.setStorageSync("userPassword")
+						if (nameOrEmail && userPassword) {
+							// 尝试登录
+							getKey({
+								nameOrEmail: nameOrEmail,
+								userPassword: userPassword
+							}).then(res => {
+								if (res.code == 0) {
+									// 先验证下,再滚去聊天室
+									that.CheckUser(res.Key)
+								} else {
+									// 报错就是你的错
+									// 你丫的登录信息错了，快去登录
+									setTimeout(() => {
+										this.ShowLogin = true;
+									}, 100)
+								}
+							})
+						} else {
+							// 你丫的登录信息没了，快去登录
+							setTimeout(() => {
+								this.ShowLogin = true;
+							}, 100)
+						}
+					} else {
+						// 看看登录信息过期没有
+						this.CheckUser(apiKey)
+					}
+				}catch(e){
 					// 你丫的登录信息没了，快去登录
 					setTimeout(() => {
 						this.ShowLogin = true;
 					}, 100)
-				} else {
-					// 看看登录信息过期没有
-					this.CheckUser(apiKey)
 				}
 
 			},
@@ -50,7 +79,10 @@
 				}).then(res => {
 					if (res.code == 0) {
 						console.log(res)
-						// 没问题，先验证下,再滚去聊天室
+						// 没问题，保存下密码，下次免登录
+						uni.setStorageSync("nameOrEmail", that.nameOrEmail)
+						uni.setStorageSync("userPassword", SparkMD5.hash(that.userPassword))
+						// 先验证下,再滚去聊天室
 						that.CheckUser(res.Key)
 					} else {
 						// 报错就是你的错
