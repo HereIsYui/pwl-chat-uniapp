@@ -32,16 +32,30 @@
 			"style": {
 				"navigationBarTitleText": "详情"
 			}
+		}, {
+			"path": "pages/chat/setting",
+			"style": {
+				"navigationBarTitleText": "设置"
+			}
+
+		},
+		{
+			"path": "uni_modules/uni-upgrade-center-app/pages/upgrade-popup",
+			"style": {
+				"disableScroll": true,
+				"app-plus": {
+					"backgroundColorTop": "transparent",
+					"background": "transparent",
+					"titleNView": false,
+					"scrollIndicator": false,
+					"popGesture": "none",
+					"animationType": "fade-in",
+					"animationDuration": 200
+
+				}
+			}
 		}
-	    ,{
-            "path" : "pages/chat/setting",
-            "style" :                                                                                    
-            {
-                "navigationBarTitleText": "设置"
-            }
-            
-        }
-    ],
+	],
 	"globalStyle": {
 		"navigationBarTextStyle": "white",
 		"navigationBarTitleText": "摸鱼派",

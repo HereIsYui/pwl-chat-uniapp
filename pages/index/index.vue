@@ -15,6 +15,7 @@
 		checkUser
 	} from '../../utils/api.js'
 	import SparkMD5 from 'spark-md5'
+	import upApp from '../../uni_modules/uni-upgrade-center-app/utils/check-update.js'
 	export default {
 		data() {
 			return {
@@ -24,6 +25,7 @@
 			}
 		},
 		onLoad() {
+			upApp()
 			this.init();
 		},
 		methods: {

@@ -1,9 +1,9 @@
 {
-    "name" : "PWL",
+    "name" : "摸鱼派",
     "appid" : "__UNI__C1F4B2F",
     "description" : "摸鱼派聊天室",
-    "versionName" : "0.1.0",
-    "versionCode" : 110,
+    "versionName" : "0.1.2",
+    "versionCode" : 112,
     "transformPx" : false,
     /* 5+App特有相关 */
     "app-plus" : {
