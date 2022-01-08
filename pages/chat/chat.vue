@@ -19,7 +19,7 @@
 								</view>
 								<view class="userName" v-else>{{item.userName}}</view>
 							</template>
-							<view v-if="item.isMoney" @click="getMoney(item.oId)" class="wx-rp">
+							<view v-if="item.isMoney" @click="getMoney(item.oId)" :class="setting.rpSkin == 'WX' ? 'wx-rp' : 'qq-rp'">
 								<view class="red-packet">
 									<view class="rp-header"></view>
 									<view class="rp-main">
@@ -218,7 +218,9 @@
 				scrollTimeout: null,
 				setting: {
 					JoinChatTime: 30,
-					ImageLoadHome: "https://pwl.yuis.cc/GetImage?url="
+					ImageLoadHome: "https://pwl.yuis.cc/GetImage?url=",
+					openAppPush:true,
+					rpSkin:"WX"
 				},
 				scrollInfo: {
 					oldTop: 99999
@@ -228,6 +230,7 @@
 				voiceTimeout: null,
 				voiceTime: 0,
 				isVoice: false,
+				isAppShow:true,
 			}
 		},
 		onPullDownRefresh() {
@@ -258,13 +261,30 @@
 			}
 			this.scrollInfo.oldTop = e.scrollTop;
 		},
+		onShow(){
+			// #ifdef APP-PLUS
+			plus.push.clear();
+			// #endif
+			this.isAppShow = true;
+			let setting = uni.getStorageSync('setting');
+			try {
+				setting = JSON.parse(setting);
+				this.setting = setting
+			} catch (e) {
+				//TODO handle the exception
+			}
+		},
+		onHide(){
+			this.isAppShow = false;
+		},
 		onLoad() {
 			this.apiKey = getApp().globalData.apiKey || uni.getStorageSync('apiKey');
 			this.data = getApp().globalData.data || uni.getStorageSync('userData');
 			let setting = uni.getStorageSync('setting');
 			try {
 				setting = JSON.parse(setting);
-				this.setting = setting
+				this.setting = setting;
+				console.log(setting)
 			} catch (e) {
 				//TODO handle the exception
 			}
@@ -715,6 +735,17 @@
 						msg.userAvatarURL = `${this.setting.ImageLoadHome+userAvatar}`
 						// #endif
 						this.filterMsg(msg)
+						// #ifdef APP-PLUS
+						// 测试app推送@
+						if (msg.content.indexOf(`aria-label="${this.data.userName}"`) >= 0 && !this.isAppShow && this.setting.openAppPush) {
+							plus.push.createMessage(`${msg.userName}@你了`);
+							plus.nativeUI.toast(`${msg.userName}@你了`,{
+								verticalAlign:"top",
+								align:"center",
+								background:"#fff"
+							});
+						}
+						// #endif
 						if (this.content.length > 500) {
 							this.getPage(1)
 						}
@@ -734,6 +765,14 @@
 					this.content[this.content.length - 1].dbUser = this.content[this.content.length - 1].dbUser || []
 					this.content[this.content.length - 1].dbUser.push(msg)
 				} else if (this.isJSON(msg.content)) {
+					if (!this.isAppShow && this.setting.openAppPush) {
+						plus.push.createMessage(`收到红包，请在APP中查看！`);
+						plus.nativeUI.toast(`收到红包，请在APP中查看！`,{
+							verticalAlign:"top",
+							align:"center",
+							background:"#fff"
+						});
+					}
 					msg.content = JSON.parse(msg.content)
 					msg.isMoney = true;
 					this.content.push(msg)
@@ -1012,7 +1051,8 @@
 			box-sizing: border-box;
 
 			font-size: 12px;
-			.rp-icon-wx{
+
+			.rp-icon-wx {
 				display: none;
 			}
 
@@ -1061,7 +1101,8 @@
 				border: 1px solid #fa9c3e;
 				border-top-left-radius: 5px;
 				border-top-right-radius: 5px;
-				.rp-icon-wx{
+
+				.rp-icon-wx {
 					width: 30px;
 				}
 			}

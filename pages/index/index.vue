@@ -36,8 +36,8 @@
 					
 					if (!apiKey) {
 						// 检查是否有保存的账号密码
-						let nameOrEmail = uni.setStorageSync("nameOrEmail")
-						let userPassword = uni.setStorageSync("userPassword")
+						let nameOrEmail = uni.getStorageSync("nameOrEmail")
+						let userPassword = uni.getStorageSync("userPassword")
 						if (nameOrEmail && userPassword) {
 							// 尝试登录
 							getKey({

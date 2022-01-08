@@ -10,7 +10,46 @@
 			<view class="msg">PS:请参考文档，切勿乱改。</view>
 		</view>
 		<view class="cell-item flex">
-			<view class="cell-label">红包皮肤:(VIP专属功能开发中)</view>
+			<view class="cell-label">消息推送:</view>
+		</view>
+		<view class="cell-item flex">
+			<view class="uni-list">
+				<radio-group class="radio-list" @change="appPushChange">
+					<label class="uni-list-cell">
+						<view>
+							<radio value="true" :checked="setting.openAppPush == true"/>
+						</view>
+						<view>打开</view>
+					</label>
+					<label class="uni-list-cell">
+						<view>
+							<radio value="false" :checked="setting.openAppPush == false" />
+						</view>
+						<view>关闭</view>
+					</label>
+				</radio-group>
+			</view>
+		</view>
+		<view class="cell-item flex">
+			<view class="cell-label">红包皮肤(VIP功能免费体验中):</view>
+		</view>
+		<view class="cell-item flex">
+			<view class="uni-list">
+				<radio-group class="radio-list" @change="rpSkinChange">
+					<label class="uni-list-cell">
+						<view>
+							<radio value="QQ" :checked="setting.rpSkin == 'QQ'"/>
+						</view>
+						<view>QQ样式</view>
+					</label>
+					<label class="uni-list-cell">
+						<view>
+							<radio value="WX" :checked="setting.rpSkin == 'WX'" />
+						</view>
+						<view>WX样式</view>
+					</label>
+				</radio-group>
+			</view>
 		</view>
 		<view class="cell-item flex">
 			<view class="cell-label">主题样式:(VIP专属功能开发中)</view>
@@ -34,7 +73,9 @@
 			return {
 				setting: {
 					JoinChatTime: 30,
-					ImageLoadHome: "https://pwl.yuis.cc/GetImage?url="
+					ImageLoadHome: "https://pwl.yuis.cc/GetImage?url=",
+					openAppPush:true,
+					rpSkin:"WX"
 				},
 				apiKey: null,
 				canGetLiveness: false,
@@ -53,15 +94,36 @@
 					this.canGetLiveness = true;
 				}
 			})
+			let setting = uni.getStorageSync('setting');
+			try {
+				setting = JSON.parse(setting);
+				if(!setting.openAppPush){
+					setting.openAppPush = true;
+				}
+				if(!setting.rpSkin){
+					setting.rpSkin = "WX";
+				}
+				this.setting = setting;
+			} catch (e) {
+				//TODO handle the exception
+			}
 		},
 		methods: {
-			getLiveness(){
+			appPushChange(e){
+				this.setting.openAppPush = e.detail.value == 'true';
+				console.log(this.setting.openAppPush)
+			},
+			rpSkinChange(e){
+				this.setting.rpSkin = e.detail.value;
+			},
+			getLiveness() {
 				getYesterdayLiveness({
 					apiKey: this.apiKey
 				}).then(res => {
+					this.canGetLiveness = false;
 					uni.showToast({
 						title: `领取成功，积分:` + res.sum,
-						icon:"none"
+						icon: "none"
 					})
 				})
 			},
@@ -144,5 +206,18 @@
 		.cell-item:not(:last-child) {
 			border-bottom: 1px dotted #999;
 		}
+	}
+	.uni-list-cell{
+		display: flex;
+		align-items: center;
+		margin: 10px 0;
+	}
+	.uni-list{
+		width: 100%;
+	}
+	.radio-list{
+		width: 100%;
+		display: flex;
+		justify-content: space-around;
 	}
 </style>

@@ -13,7 +13,7 @@
 			</view>
 			<view class="user-cell">
 				<view class="user-cell-label">签名：</view>
-				<view>{{userInfo.userIntro}}</view>
+				<view>{{userInfo.userIntro || "这个人很懒，什么都没写~"}}</view>
 			</view>
 			<view class="user-cell">
 				<view class="user-cell-label">用户组：</view>
