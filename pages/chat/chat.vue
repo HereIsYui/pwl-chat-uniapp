@@ -19,7 +19,8 @@
 								</view>
 								<view class="userName" v-else>{{item.userName}}</view>
 							</template>
-							<view v-if="item.isMoney" @click="getMoney(item.oId)" :class="setting.rpSkin == 'WX' ? 'wx-rp' : 'qq-rp'">
+							<view v-if="item.isMoney" @click="getMoney(item.oId)"
+								:class="setting.rpSkin == 'WX' ? 'wx-rp' : 'qq-rp'">
 								<view class="red-packet">
 									<view class="rp-header"></view>
 									<view class="rp-main">
@@ -161,7 +162,8 @@
 		faceList,
 		getUserInfo,
 		deleteMsg,
-		getLiveness
+		getLiveness,
+		xiaoIceApi
 	} from '../../utils/api.js'
 	const recorderManager = uni.getRecorderManager();
 	const innerAudioContext = uni.createInnerAudioContext();
@@ -202,6 +204,18 @@
 					specify: "专属红包",
 					heartbeat: "心跳红包"
 				},
+				defaultxiaoIceMessage: {
+					content: null,
+					dbUser: [],
+					md: null,
+					oId: 0,
+					sysMetal: `{"list":[{"data":"","name":"小冰","description":"摸鱼派官方认证机器人（已备案）","attr":"url=https://www.lingmx.com/52pj/images/xiaoIce.jpg&backcolor=B9CDF6&fontcolor=ffffff","enabled":true}]}`,
+					time: "2099-12-31 23:59:59",
+					type: "msg",
+					userAvatarURL: "https://pwl.stackoverflow.wiki/2021/12/blob-3ff70c59.png",
+					userName: "xiaoIce",
+					userNickname: "小冰工作号"
+				},
 				clientY: -999,
 				clientX: 0,
 				longData: {
@@ -219,8 +233,8 @@
 				setting: {
 					JoinChatTime: 30,
 					ImageLoadHome: "https://pwl.yuis.cc/GetImage?url=",
-					openAppPush:true,
-					rpSkin:"WX"
+					openAppPush: true,
+					rpSkin: "WX"
 				},
 				scrollInfo: {
 					oldTop: 99999
@@ -230,7 +244,7 @@
 				voiceTimeout: null,
 				voiceTime: 0,
 				isVoice: false,
-				isAppShow:true,
+				isAppShow: true,
 			}
 		},
 		onPullDownRefresh() {
@@ -261,7 +275,7 @@
 			}
 			this.scrollInfo.oldTop = e.scrollTop;
 		},
-		onShow(){
+		onShow() {
 			// #ifdef APP-PLUS
 			plus.push.clear();
 			// #endif
@@ -274,7 +288,7 @@
 				//TODO handle the exception
 			}
 		},
-		onHide(){
+		onHide() {
 			this.isAppShow = false;
 		},
 		onLoad() {
@@ -682,14 +696,45 @@
 				if (content && content.trim() == "") {
 					return;
 				}
-				send({
-					content: content,
-					apiKey: that.apiKey
-				}).then(res => {
+				if (/^(小冰|小爱(同学)?|嘿?[，, ]?siri)/i.test(content) && /(小姐姐视频)|([涩色]图)|(看妞|小姐姐|照片|来个妞)/.test(content)) {
 					that.msg = "";
 					that.isSending = false;
-					that.scrollPower = true;
-				})
+					let userMsg = JSON.parse(JSON.stringify(that.defaultxiaoIceMessage));
+					userMsg.content = content;
+					userMsg.sysMetal = that.data.sysMetal;
+					userMsg.userName = that.data.userName;
+					userMsg.userNickname = that.data.userNickname;
+					userMsg.oId = Math.floor(Math.random() * 90000000000000 + 10000000000000);
+					userMsg.userAvatarURL = that.data.userAvatarURL;
+					that.content.push(userMsg)
+					xiaoIceApi({
+						msg: content,
+						user: that.data.userName,
+						key: "xiaoIce"
+					}).then(res => {
+						console.log(res)
+						let msg = JSON.parse(JSON.stringify(that.defaultxiaoIceMessage));
+						msg.content = res.msg;
+						msg.oId = Math.floor(Math.random() * 90000000000000 + 10000000000000);
+						that.content.push(msg)
+					}).catch(err => {
+						console.log(err)
+						let msg = JSON.parse(JSON.stringify(that.defaultxiaoIceMessage));
+						msg.content = "小冰API连接超时啦~";
+						userMsg.oId = Math.floor(Math.random() * 90000000000000 + 10000000000000);
+						that.content.push(msg)
+					})
+				} else {
+					send({
+						content: content,
+						apiKey: that.apiKey
+					}).then(res => {
+						that.msg = "";
+						that.isSending = false;
+						that.scrollPower = true;
+					})
+				}
+
 			},
 			initChat() {
 				let that = this;
@@ -729,6 +774,9 @@
 						if (!this.scrollPower && !this.isShowToBottom) {
 							this.isShowToBottom = true;
 						}
+						if (msg.userName == "xiaoIce") {
+							console.log(msg)
+						}
 						// #ifdef H5
 						let userAvatar = encodeURI(msg.userAvatarURL)
 						userAvatar = btoa(userAvatar);
@@ -737,12 +785,13 @@
 						this.filterMsg(msg)
 						// #ifdef APP-PLUS
 						// 测试app推送@
-						if (msg.content.indexOf(`aria-label="${this.data.userName}"`) >= 0 && !this.isAppShow && this.setting.openAppPush) {
+						if (msg.content.indexOf(`aria-label="${this.data.userName}"`) >= 0 && !this.isAppShow && this
+							.setting.openAppPush) {
 							plus.push.createMessage(`${msg.userName}@你了`);
-							plus.nativeUI.toast(`${msg.userName}@你了`,{
-								verticalAlign:"top",
-								align:"center",
-								background:"#fff"
+							plus.nativeUI.toast(`${msg.userName}@你了`, {
+								verticalAlign: "top",
+								align: "center",
+								background: "#fff"
 							});
 						}
 						// #endif
@@ -767,10 +816,10 @@
 				} else if (this.isJSON(msg.content)) {
 					if (!this.isAppShow && this.setting.openAppPush) {
 						plus.push.createMessage(`收到红包，请在APP中查看！`);
-						plus.nativeUI.toast(`收到红包，请在APP中查看！`,{
-							verticalAlign:"top",
-							align:"center",
-							background:"#fff"
+						plus.nativeUI.toast(`收到红包，请在APP中查看！`, {
+							verticalAlign: "top",
+							align: "center",
+							background: "#fff"
 						});
 					}
 					msg.content = JSON.parse(msg.content)
