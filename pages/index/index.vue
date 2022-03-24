@@ -106,8 +106,11 @@
 						uni.setStorageSync('apiKey', apiKey)
 						getApp().globalData.data = res.data;
 						getApp().globalData.apiKey = apiKey;
+						// uni.reLaunch({
+						// 	url: '/pages/chat/chat'
+						// })
 						uni.reLaunch({
-							url: '/pages/chat/chat'
+							url:'/pages/tabbar/chatList/chatList'
 						})
 					} else {
 						// 你丫的登录信息过期了，快去登录

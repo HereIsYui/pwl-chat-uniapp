@@ -55,7 +55,16 @@
 				}
 			}
 		}
-	],
+	    ,{
+            "path" : "pages/tabbar/chatList/chatList",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "摸鱼派",
+                "enablePullDownRefresh": false
+            }
+            
+        }
+    ],
 	"globalStyle": {
 		"navigationBarTextStyle": "white",
 		"navigationBarTitleText": "摸鱼派",

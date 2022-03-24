@@ -9,20 +9,25 @@
 		onShow: function() {
 			// #ifdef APP-PLUS
 			plus.push.setAutoNotification(false);
-			console.log('关闭推送')
 			// #endif
 			console.log('App Show')
 		},
 		onHide: function() {
 			// #ifdef APP-PLUS
 			plus.push.setAutoNotification(true);
-			console.log('打开推送')
 			// #endif
 			console.log('App Hide')
 		},
 	}
 </script>
 
-<style>
+<style lang="scss">
+	@import "@/uni_modules/uview-ui/index.scss";
 	/*每个页面公共css */
+	.MainBox {
+		.u-cell__left-icon-wrap {
+			margin-right: 10px !important;
+		}
+	}
 </style>
+

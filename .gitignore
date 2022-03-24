@@ -2,7 +2,7 @@
 node_modules
 dist
 unpackage
-
+uni_modules
 
 # Editor directories and files
 .hbuilderx
