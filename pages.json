@@ -64,6 +64,15 @@
             }
             
         }
+        ,{
+            "path" : "pages/xiaoice/xiaoice",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "小冰",
+                "enablePullDownRefresh": false
+            }
+            
+        }
     ],
 	"globalStyle": {
 		"navigationBarTextStyle": "white",

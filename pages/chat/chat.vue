@@ -154,6 +154,10 @@
 	import mpHtml from '../../components/mp-html/mp-html'
 	import permision from "../../utils/permission.js"
 	import {
+		mapGetters,
+		mapMutations
+	} from 'vuex'
+	import {
 		upload,
 		getMorePage,
 		openRedPacket,
@@ -167,13 +171,14 @@
 	} from '../../utils/api.js'
 	const recorderManager = uni.getRecorderManager();
 	const innerAudioContext = uni.createInnerAudioContext();
+	const App = getApp();
 	export default {
 		components: {
 			mpHtml
 		},
 		data() {
 			return {
-				content: [],
+				content:[],
 				apiKey: "",
 				data: {},
 				msg: "",
@@ -292,9 +297,12 @@
 			this.isAppShow = false;
 		},
 		onLoad() {
-			this.apiKey = getApp().globalData.apiKey || uni.getStorageSync('apiKey');
-			this.data = getApp().globalData.data || uni.getStorageSync('userData');
+			this.apiKey = App.globalData.apiKey || uni.getStorageSync('apiKey');
+			this.data = App.globalData.data || uni.getStorageSync('userData');
 			let setting = uni.getStorageSync('setting');
+			this.firstMsg = this.$store.state.firstMsg;
+			this.secondMsg = this.$store.state.secondMsg;
+			this.content = this.$store.state.content;
 			try {
 				setting = JSON.parse(setting);
 				this.setting = setting;
@@ -308,23 +316,10 @@
 				})
 				return;
 			}
-			this.getPage(1);
+
 			this.getFaceList();
-			this.initChat();
 			// this.getUserEmotions();
 			let that = this;
-			uni.onSocketClose(function(res) {
-				console.log('WebSocket 已关闭！');
-				that.isSocketClose = true;
-				that.JoinChat = setInterval(() => {
-					that.JoinChatTime--;
-					console.log(`${that.JoinChatTime}s后尝试重连WebSocket`);
-					if (that.JoinChatTime == 0) {
-						that.initChat()
-						that.JoinChatTime = that.setting.JoinChatTime || 30;
-					}
-				}, 1000)
-			});
 			recorderManager.onStop(function(res) {
 				that.voicePath = res.tempFilePath;
 				that.voiceTime = 0;
@@ -362,6 +357,20 @@
 			setTimeout(() => {
 				this.getUserLiveness();
 			}, Math.random() * 30000 + 30000)
+		},
+		watch: {
+			'$store.state.content'(newVal, oldVal) {
+				//对数据进行操作
+				this.content = newVal;
+			},
+			'$store.state.firstMsg'(newVal, oldVal) {
+				//对数据进行操作
+				this.firstMsg = newVal;
+			},
+			'$store.state.secondMsg'(newVal, oldVal) {
+				//对数据进行操作
+				this.secondMsg = newVal;
+			}
 		},
 		methods: {
 			toVoice(index) {
@@ -736,132 +745,7 @@
 				}
 
 			},
-			initChat() {
-				let that = this;
-				var socketTask = uni.connectSocket({
-					url: WS.channel,
-					success: (res) => {
-						that.isSocketClose = false;
-						console.log("WebSocket 连接成功！")
-						clearInterval(that.JoinChat);
-					},
-					fail: (err) => {
-						console.log("WebSocket 连接失败！")
-					}
-				});
-				socketTask.onMessage(function(res) {
-					that.wsMessage(res)
-				})
-			},
-			wsMessage(res) {
-				let msg = JSON.parse(res.data)
-				switch (msg.type) {
-					case "online": //在线人数
-						uni.setStorageSync('users', JSON.stringify(msg.users))
-						uni.setNavigationBarTitle({
-							title: `摸鱼派-聊天室(${msg.onlineChatCnt})`
-						})
-						break;
-					case "revoke": //撤回
-						for (let i = 0; i < this.content.length; i++) {
-							let c = this.content[i];
-							if (c.oId != msg.oId) continue;
-							this.content.splice(i, 1);
-							break;
-						}
-						break;
-					case "msg": //消息
-						if (!this.scrollPower && !this.isShowToBottom) {
-							this.isShowToBottom = true;
-						}
-						if (msg.userName == "xiaoIce") {
-							console.log(msg)
-						}
-						// #ifdef H5
-						let userAvatar = encodeURI(msg.userAvatarURL)
-						userAvatar = btoa(userAvatar);
-						msg.userAvatarURL = `${this.setting.ImageLoadHome+userAvatar}`
-						// #endif
-						this.filterMsg(msg)
-						// #ifdef APP-PLUS
-						// 测试app推送@
-						if (msg.content.indexOf(`aria-label="${this.data.userName}"`) >= 0 && !this.isAppShow && this
-							.setting.openAppPush) {
-							plus.push.createMessage(`${msg.userName}@你了`);
-							plus.nativeUI.toast(`${msg.userName}@你了`, {
-								verticalAlign: "top",
-								align: "center",
-								background: "#fff"
-							});
-						}
-						// #endif
-						if (this.content.length > 500) {
-							this.getPage(1)
-						}
 
-						break;
-					case "redPacketStatus":
-						this.content.push(msg);
-						break;
-				}
-			},
-			filterMsg(msg) {
-				let that = this;
-				msg.dbUser = msg.dbUser || [];
-				// console.log(this.content.length >= 2 && msg.content == this.content[this.content.length - 1].content)
-				if (msg.type == 'msg' && !this.isJSON(msg) && this.content.length >= 2 && msg.content == this.content[this
-						.content.length - 1].content) {
-					this.content[this.content.length - 1].dbUser = this.content[this.content.length - 1].dbUser || []
-					this.content[this.content.length - 1].dbUser.push(msg)
-				} else if (this.isJSON(msg.content)) {
-					if (!this.isAppShow && this.setting.openAppPush) {
-						plus.push.createMessage(`收到红包，请在APP中查看！`);
-						plus.nativeUI.toast(`收到红包，请在APP中查看！`, {
-							verticalAlign: "top",
-							align: "center",
-							background: "#fff"
-						});
-					}
-					msg.content = JSON.parse(msg.content)
-					msg.isMoney = true;
-					this.content.push(msg)
-					this.scrollToBottom()
-
-				} else if (/<img [^>]*src=['"]([^'"]+)[^>]*>/gi.test(msg.content)) {
-					// #ifdef H5
-					let newSrcList = [];
-					msg.content = msg.content.replace(/<img [^>]*src=['"]([^'"]+)[^>]*>/gi, function(match, capture) {
-						let url = encodeURI(capture);
-						url = btoa(url);
-						let imgUrl = `${ that.setting.ImageLoadHome + url}`;
-						return `<img src="${imgUrl}" alt="图片表情" />`
-					});
-					// #endif
-					this.content.push(msg)
-				} else {
-					this.content.push(msg)
-				}
-				if (!msg.isMoney) {
-					this.secondMsg = this.firstMsg;
-					this.firstMsg = msg;
-				}
-
-			},
-			isJSON(str) {
-				if (typeof str == 'string') {
-					try {
-						var obj = JSON.parse(str);
-						if (typeof obj == 'object' && obj) {
-							return true;
-						} else {
-							return false;
-						}
-
-					} catch (e) {
-						return false;
-					}
-				}
-			},
 			toBottom() {
 				this.scrollPower = true;
 				this.isShowToBottom = false;
@@ -883,638 +767,637 @@
 						}
 					})
 				}
-			}
+			},
 		},
 	}
 </script>
 <style lang="scss" scoped>
 	.content {
-			width: 100vw;
-			height: 100%;
-			background-color: #3b3e43;
-		}
-	
-		.userAvatar {
-			width: 40px;
-			height: 40px !important;
-			border-radius: 50%;
-			margin-right: 10px;
-			margin-top: 10px;
-		}
-	
-		.msgInfo {
-			position: relative;
-			display: flex;
-			justify-content: flex-start;
-			align-items: flex-start;
-			width: 100%;
-			margin-top: 10px;
-		}
-	
-		.msgInfo.isYou {
-			justify-content: flex-end;
-		}
-	
-		.MsgDetailBox {
-			display: flex;
-			justify-content: space-between;
-			align-items: flex-end;
-		}
-	
-		.contentBox {
-			min-height: 100%;
-			padding: 15px 10px 80px;
+		width: 100vw;
+		height: 100%;
+		background-color: #3b3e43;
+	}
+
+	.userAvatar {
+		width: 40px;
+		height: 40px !important;
+		border-radius: 50%;
+		margin-right: 10px;
+		margin-top: 10px;
+	}
+
+	.msgInfo {
+		position: relative;
+		display: flex;
+		justify-content: flex-start;
+		align-items: flex-start;
+		width: 100%;
+		margin-top: 10px;
+	}
+
+	.msgInfo.isYou {
+		justify-content: flex-end;
+	}
+
+	.MsgDetailBox {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-end;
+	}
+
+	.contentBox {
+		min-height: 100%;
+		padding: 15px 10px 80px;
+		box-sizing: border-box;
+	}
+
+	.msgBox {
+		display: flex;
+		justify-content: center;
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.isYou .msgBox {
+		align-items: flex-end;
+	}
+
+	.isYou .userAvatar {
+		width: 40px;
+		height: 40px;
+		border-radius: 50%;
+		margin-left: 10px;
+		margin-top: 0;
+	}
+
+	.userName {
+		font-size: 12px;
+		color: #fff;
+	}
+
+	.msgContent {
+		position: relative;
+		min-width: 10px;
+		max-width: 60vw;
+		min-height: 15px;
+		margin: 5px 0;
+		padding: 8px 10px;
+		border-radius: 5px;
+		background-color: #fff;
+		word-break: break-word;
+	}
+
+	.msgContent::before {
+		content: "";
+		position: absolute;
+		left: -10px;
+		top: 5px;
+		width: 0;
+		height: 0;
+		border-right: 5px solid #fff;
+		border-top: 5px solid rgba(0, 0, 0, 0);
+		border-bottom: 5px solid rgba(0, 0, 0, 0);
+		border-left: 5px solid rgba(0, 0, 0, 0);
+	}
+
+	.isYou .msgContent {
+		background: #9eea6a;
+	}
+
+	.isYou .msgContent::before {
+		content: "";
+		position: absolute;
+		right: -10px;
+		left: auto;
+		top: 5px;
+		width: 0;
+		height: 0;
+		border-right: 5px solid rgba(0, 0, 0, 0);
+		border-top: 5px solid rgba(0, 0, 0, 0);
+		border-bottom: 5px solid rgba(0, 0, 0, 0);
+		border-left: 5px solid #9eea6a;
+	}
+
+	.msgContent p {
+		min-width: 10px;
+	}
+
+	.sendBox {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		z-index: 1000;
+		width: 100vw;
+		min-height: 100px;
+		padding: 0 15px;
+		background: #fff;
+		box-sizing: border-box;
+	}
+
+	.livenessLine {
+		position: absolute;
+		top: -1px;
+		left: 0;
+		width: 0;
+		height: 2px;
+		background: red;
+	}
+
+	.menuBox {
+		display: flex;
+		height: 42px;
+		padding: 5px 0;
+		border-top: 1px solid #F8F8F8;
+		box-sizing: border-box;
+	}
+
+	.sendBtn {
+		position: absolute;
+		right: 5vw;
+		top: 10px;
+		z-index: 10;
+		height: 30px;
+		line-height: 30px;
+		font-size: 14px;
+		background-color: #60b044;
+		color: #fff;
+	}
+
+	.iconBtn {
+		margin: 0 5px;
+	}
+
+	.iconBtn image {
+		height: 32px;
+	}
+
+	.chat-input {
+		width: 100%;
+		height: calc(100% - 42px);
+		padding: 10px;
+		padding-right: 60px;
+		line-height: 30px;
+		box-sizing: border-box;
+		overflow-y: scroll;
+	}
+
+	.qq-rp {
+		.red-packet {
+			color: #fff;
+			height: 200px;
+			margin: 10px auto 0;
+			width: 160px;
+			border-radius: 15px;
+			background: #eb4454;
 			box-sizing: border-box;
+			box-shadow: 0 0 2px 2px #333;
+			overflow: hidden;
 		}
-	
-		.msgBox {
-			display: flex;
-			justify-content: center;
-			align-items: flex-start;
-			flex-direction: column;
+
+		.rp-header {
+			width: 160px;
+			height: 200px;
+			margin-top: -120px;
+			border-radius: 100%;
+			background: #d13c4a;
 		}
-	
-		.isYou .msgBox {
-			align-items: flex-end;
+
+		.rp-main {
+			width: 100%;
+			height: 100%;
+			text-align: center;
 		}
-	
-		.isYou .userAvatar {
+
+		.red-packet .open {
 			width: 40px;
 			height: 40px;
-			border-radius: 50%;
-			margin-left: 10px;
-			margin-top: 0;
-		}
-	
-		.userName {
-			font-size: 12px;
 			color: #fff;
-		}
-	
-		.msgContent {
-			position: relative;
-			min-width: 10px;
-			max-width: 60vw;
-			min-height: 15px;
-			margin: 5px 0;
-			padding: 8px 10px;
-			border-radius: 5px;
-			background-color: #fff;
-			word-break: break-word;
-		}
-	
-		.msgContent::before {
-			content: "";
-			position: absolute;
-			left: -10px;
-			top: 5px;
-			width: 0;
-			height: 0;
-			border-right: 5px solid #fff;
-			border-top: 5px solid rgba(0, 0, 0, 0);
-			border-bottom: 5px solid rgba(0, 0, 0, 0);
-			border-left: 5px solid rgba(0, 0, 0, 0);
-		}
-	
-		.isYou .msgContent {
-			background: #9eea6a;
-		}
-	
-		.isYou .msgContent::before {
-			content: "";
-			position: absolute;
-			right: -10px;
-			left: auto;
-			top: 5px;
-			width: 0;
-			height: 0;
-			border-right: 5px solid rgba(0, 0, 0, 0);
-			border-top: 5px solid rgba(0, 0, 0, 0);
-			border-bottom: 5px solid rgba(0, 0, 0, 0);
-			border-left: 5px solid #9eea6a;
-		}
-	
-		.msgContent p {
-			min-width: 10px;
-		}
-	
-		.sendBox {
-			position: fixed;
-			bottom: 0;
-			left: 0;
-			z-index: 1000;
-			width: 100vw;
-			min-height: 100px;
-			padding: 0 15px;
-			background: #fff;
-			box-sizing: border-box;
-		}
-	
-		.livenessLine {
-			position: absolute;
-			top: -1px;
-			left: 0;
-			width: 0;
-			height: 2px;
-			background: red;
-		}
-	
-		.menuBox {
-			display: flex;
-			height: 42px;
-			padding: 5px 0;
-			border-top: 1px solid #F8F8F8;
-			box-sizing: border-box;
-		}
-	
-		.sendBtn {
-			position: absolute;
-			right: 5vw;
-			top: 10px;
-			z-index: 10;
-			height: 30px;
-			line-height: 30px;
+			line-height: 40px;
 			font-size: 14px;
-			background-color: #60b044;
-			color: #fff;
+			margin: -20px auto 20px;
+			background: #ffb03a;
+			border-radius: 100%;
 		}
-	
-		.iconBtn {
-			margin: 0 5px;
-		}
-	
-		.iconBtn image {
-			height: 32px;
-		}
-	
-		.chat-input {
-			width: 100%;
-			height: calc(100% - 42px);
-			padding: 10px;
-			padding-right: 60px;
-			line-height: 30px;
+
+		.rp-msg {
+			padding: 0 10px;
 			box-sizing: border-box;
-			overflow-y: scroll;
-		}
-	
-		.qq-rp {
-			.red-packet {
-				color: #fff;
-				height: 200px;
-				margin: 10px auto 0;
-				width: 160px;
-				border-radius: 15px;
-				background: #eb4454;
-				box-sizing: border-box;
-				box-shadow: 0 0 2px 2px #333;
-				overflow: hidden;
-			}
-	
-			.rp-header {
-				width: 160px;
-				height: 200px;
-				margin-top: -120px;
-				border-radius: 100%;
-				background: #d13c4a;
-			}
-	
-			.rp-main {
-				width: 100%;
-				height: 100%;
-				text-align: center;
-			}
-	
-			.red-packet .open {
-				width: 40px;
-				height: 40px;
-				color: #fff;
-				line-height: 40px;
-				font-size: 14px;
-				margin: -20px auto 20px;
-				background: #ffb03a;
-				border-radius: 100%;
-			}
-	
-			.rp-msg {
-				padding: 0 10px;
-				box-sizing: border-box;
-	
-				font-size: 12px;
-	
-				.rp-icon-wx {
-					display: none;
-				}
-	
-				.rp-msg-inner {
-					overflow: hidden;
-					text-overflow: ellipsis;
-					white-space: nowrap;
-				}
-			}
-	
-		}
-	
-		.wx-rp {
-			.red-packet {
-				color: #fff;
-				height: 92px;
-				margin: 10px auto 0;
-				width: 220px;
-				border-radius: 5px;
-				background: #fa9c3e;
-				box-sizing: border-box;
-				box-shadow: 0 0 2px 2px #333;
-				// overflow: hidden;
-			}
-	
-			.red-packet .open,
-			.rp-header {
+
+			font-size: 12px;
+
+			.rp-icon-wx {
 				display: none;
 			}
-	
-			.rp-main {
-				width: 100%;
-				height: 100%;
+
+			.rp-msg-inner {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
 			}
-	
-			.rp-msg {
-				font-size: 12px;
-	
-				.rp-msg-inner {
-					position: relative;
-					display: flex;
-					padding: 10px;
-					height: 70px;
-					font-size: 16px;
-					box-sizing: border-box;
-					border: 1px solid #fa9c3e;
-					border-top-left-radius: 5px;
-					border-top-right-radius: 5px;
-	
-					.rp-icon-wx {
-						width: 30px;
-					}
+		}
+
+	}
+
+	.wx-rp {
+		.red-packet {
+			color: #fff;
+			height: 92px;
+			margin: 10px auto 0;
+			width: 220px;
+			border-radius: 5px;
+			background: #fa9c3e;
+			box-sizing: border-box;
+			box-shadow: 0 0 2px 2px #333;
+			// overflow: hidden;
+		}
+
+		.red-packet .open,
+		.rp-header {
+			display: none;
+		}
+
+		.rp-main {
+			width: 100%;
+			height: 100%;
+		}
+
+		.rp-msg {
+			font-size: 12px;
+
+			.rp-msg-inner {
+				position: relative;
+				display: flex;
+				padding: 10px;
+				height: 70px;
+				font-size: 16px;
+				box-sizing: border-box;
+				border: 1px solid #fa9c3e;
+				border-top-left-radius: 5px;
+				border-top-right-radius: 5px;
+
+				.rp-icon-wx {
+					width: 30px;
 				}
-	
+			}
+
+			.rp-msg-inner::before {
+				content: "";
+				position: absolute;
+				left: -10px;
+				top: 10px;
+				width: 0;
+				height: 0;
+				border-right: 5px solid #fa9c3e;
+				border-top: 5px solid rgba(0, 0, 0, 0);
+				border-bottom: 5px solid rgba(0, 0, 0, 0);
+				border-left: 5px solid rgba(0, 0, 0, 0);
+			}
+
+			.rp-type {
+				padding: 0 10px;
+				height: 22px;
+				line-height: 22px;
+				color: #666;
+				box-sizing: border-box;
+				background-color: #fff;
+				border: 1px solid #f8f8f8;
+				border-bottom-left-radius: 5px;
+				border-bottom-right-radius: 5px;
+			}
+		}
+
+	}
+
+	.isYou {
+		.wx-rp {
+			.rp-msg {
 				.rp-msg-inner::before {
 					content: "";
 					position: absolute;
-					left: -10px;
+					left: auto;
+					right: -10px;
 					top: 10px;
 					width: 0;
 					height: 0;
-					border-right: 5px solid #fa9c3e;
+					border-right: 5px solid rgba(0, 0, 0, 0);
 					border-top: 5px solid rgba(0, 0, 0, 0);
 					border-bottom: 5px solid rgba(0, 0, 0, 0);
-					border-left: 5px solid rgba(0, 0, 0, 0);
-				}
-	
-				.rp-type {
-					padding: 0 10px;
-					height: 22px;
-					line-height: 22px;
-					color: #666;
-					box-sizing: border-box;
-					background-color: #fff;
-					border: 1px solid #f8f8f8;
-					border-bottom-left-radius: 5px;
-					border-bottom-right-radius: 5px;
-				}
-			}
-	
-		}
-	
-		.isYou {
-			.wx-rp {
-				.rp-msg {
-					.rp-msg-inner::before {
-						content: "";
-						position: absolute;
-						left: auto;
-						right: -10px;
-						top: 10px;
-						width: 0;
-						height: 0;
-						border-right: 5px solid rgba(0, 0, 0, 0);
-						border-top: 5px solid rgba(0, 0, 0, 0);
-						border-bottom: 5px solid rgba(0, 0, 0, 0);
-						border-left: 5px solid #fa9c3e;
-					}
+					border-left: 5px solid #fa9c3e;
 				}
 			}
 		}
-	
-		.redPacketinfo {
+	}
+
+	.redPacketinfo {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+		color: #fff;
+		font-size: 12px;
+		width: 100%;
+	}
+
+	.humanNature {
+		width: 35px;
+		height: 35px;
+		margin-left: 5px;
+		text-align: center;
+		line-height: 35px;
+		font-size: 12px;
+		font-weight: bold;
+		color: #000;
+		background: #fff;
+		border-radius: 50%;
+		transform: translateY(-20%);
+	}
+
+	.redPacketBg {
+		position: fixed;
+		z-index: 250;
+		top: 0;
+		left: 0;
+		width: 100vw;
+		height: 100vh;
+	}
+
+	.redPacketbox {
+		position: absolute;
+		top: 8vh;
+		left: 50%;
+		width: 80vw;
+		height: 70vh;
+		box-sizing: border-box;
+		transform: translateX(-50%);
+		background: #fff;
+
+		.rpiInfo {
 			display: flex;
-			flex-direction: row;
-			align-items: center;
-			justify-content: center;
-			color: #fff;
-			font-size: 12px;
 			width: 100%;
-		}
-	
-		.humanNature {
-			width: 35px;
-			height: 35px;
-			margin-left: 5px;
-			text-align: center;
-			line-height: 35px;
-			font-size: 12px;
-			font-weight: bold;
-			color: #000;
-			background: #fff;
-			border-radius: 50%;
-			transform: translateY(-20%);
-		}
-	
-		.redPacketBg {
-			position: fixed;
-			z-index: 250;
-			top: 0;
-			left: 0;
-			width: 100vw;
-			height: 100vh;
-		}
-	
-		.redPacketbox {
-			position: absolute;
-			top: 8vh;
-			left: 50%;
-			width: 80vw;
-			height: 70vh;
+			height: 130px;
+			background: #d13d4b;
+			padding: 15px;
 			box-sizing: border-box;
-			transform: translateX(-50%);
-			background: #fff;
-	
-			.rpiInfo {
-				display: flex;
-				width: 100%;
-				height: 130px;
-				background: #d13d4b;
-				padding: 15px;
-				box-sizing: border-box;
-	
-				.rpi-user-img {
-					width: 50px;
-					height: 50px;
-					border-radius: 50%;
-					margin-right: 10px;
-				}
-	
-				.rpi-user {
-					display: flex;
-					justify-content: flex-start;
-					align-items: center;
-					font-size: 14px;
-				}
-	
-				.rpi-recivers {
-					font-size: 14px;
-				}
-	
-				.rpi-msg {
-					font-size: 24px;
-				}
-			}
-	
-			.rpi-count {
-				position: relative;
-				width: 100%;
-				font-size: 14px;
-				padding: 5px 10px;
-				box-sizing: border-box;
-				background-color: #ecedee;
-			}
-	
-			.rpi-count::before {
-				content: "";
-				position: absolute;
-				left: 20px;
-				top: -20px;
-				width: 0;
-				height: 0;
-				border-right: 10px solid rgba(0, 0, 0, 0);
-				border-top: 10px solid rgba(0, 0, 0, 0);
-				border-bottom: 10px solid #ecedee;
-				border-left: 10px solid rgba(0, 0, 0, 0);
-			}
-	
-			.redPacketList {
-				width: 100%;
-				height: calc(100% - 160px);
-				overflow-y: scroll;
-				overflow-x: hidden;
-				padding: 15px;
-				box-sizing: border-box;
-	
-				.rpl-item {
-					display: flex;
-					justify-content: space-between;
-					align-items: center;
-					margin: 5px 0;
-					padding: 5px;
-					background: #fff;
-	
-					.rpl-img {
-						width: 38px;
-						height: 38px;
-						border-radius: 5px;
-					}
-	
-					.rpl-time {
-						font-size: 12px;
-						color: rgba(0, 0, 0, 0.38);
-					}
-	
-					.rpl-info {
-						display: flex;
-						flex-direction: column;
-						justify-content: flex-start;
-						width: 65%;
-						text-align: left;
-						margin-left: 5px;
-					}
-	
-					.rpl-tag {
-						display: inline-table;
-						padding: 0 5px;
-						line-height: 20px;
-						height: 20px;
-						max-width: 95px;
-						text-align: center;
-						font-size: 12px;
-						border-radius: 5px;
-						border: 1px solid #fff;
-					}
-	
-					.isMax {
-						background-color: #60b044;
-						border-color: #5ca941;
-						color: #fff;
-					}
-	
-					.is0 {
-						border-color: #D5D5D5;
-						background-color: rgba(255, 255, 255, .2);
-						color: #faa;
-					}
-	
-					.isNeg {
-						border-color: #D5D5D5;
-						background-color: rgba(255, 255, 255, .2);
-						color: #000;
-					}
-	
-					.rpl-money {
-						width: 25%;
-						font-size: 12px;
-						text-align: right;
-					}
-				}
-	
-				.rpl-item:not(:last-child) {
-					border-bottom: 1px dotted #999;
-				}
-			}
-		}
-	
-	
-	
-		.faceBox {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			flex-wrap: wrap;
-			width: 100%;
-			height: 200px;
-			overflow-y: scroll;
-		}
-	
-		.face-item {
-			min-width: 50px;
-			max-width: 50px;
-			min-height: 50px;
-			max-height: 50px;
-			margin: 5px;
-		}
-	
-		.voice-btn {
-			width: 70px;
-			height: 100px;
-			margin: 0 auto;
-		}
-	
-		.voice-time {
-			text-align: center;
-		}
-	
-		.voice-img {
-			width: 70px;
-			height: 70px;
-	
-		}
-	
-		.longTap-list {
-			position: fixed;
-			left: 50%;
-			top: -25vw;
-			z-index: 100;
-			display: flex;
-			padding: 10px;
-			min-width: 100px;
-			height: 20px;
-			font-size: 12px;
-			background: #fff;
-			box-shadow: 0 2px 2px #6c6c6c;
-			border-top-right-radius: 10px;
-			border-bottom-left-radius: 10px;
-		}
-	
-		.longTap-item {
-			margin: 0 5px;
-			height: 20px;
-			line-height: 20px;
-		}
-	
-		.backTobottom {
-			position: fixed;
-			z-index: 1001;
-			bottom: 100px;
-			right: 15px;
-			width: 100px;
-			height: 30px;
-			line-height: 30px;
-			font-size: 12px;
-			text-align: center;
-			color: #4CD964;
-			background: #fff;
-			border-bottom: 1px solid #333333;
-		}
-	
-		.SocketCloseMsg {
-			position: fixed;
-			left: 0;
-			z-index: 1001;
-			width: 100%;
-			height: 30px;
-			line-height: 30px;
-			font-size: 12px;
-			text-align: center;
-			color: #FFFFFF;
-			background: #f56c6c;
-		}
-	
-		.textLink {
-			text-decoration: underline;
-			margin-left: 5px;
-		}
-	
-		.db-users {
-			padding: 5px 0 5px 10px;
-			max-width: 70vw;
-			display: flex;
-			justify-content: flex-start;
-			align-items: center;
-			flex-wrap: wrap;
-	
-			.db-user {
-				margin-left: -5px;
-			}
-	
-			.db-avatar {
-				width: 25px;
-				height: 25px;
+
+			.rpi-user-img {
+				width: 50px;
+				height: 50px;
 				border-radius: 50%;
+				margin-right: 10px;
 			}
-	
-			.db-word {
-				font-size: 10px;
-				color: #fff;
-				display: inline-block;
-				padding-left: 5px;
+
+			.rpi-user {
+				display: flex;
+				justify-content: flex-start;
+				align-items: center;
+				font-size: 14px;
+			}
+
+			.rpi-recivers {
+				font-size: 14px;
+			}
+
+			.rpi-msg {
+				font-size: 24px;
 			}
 		}
-	
+
+		.rpi-count {
+			position: relative;
+			width: 100%;
+			font-size: 14px;
+			padding: 5px 10px;
+			box-sizing: border-box;
+			background-color: #ecedee;
+		}
+
+		.rpi-count::before {
+			content: "";
+			position: absolute;
+			left: 20px;
+			top: -20px;
+			width: 0;
+			height: 0;
+			border-right: 10px solid rgba(0, 0, 0, 0);
+			border-top: 10px solid rgba(0, 0, 0, 0);
+			border-bottom: 10px solid #ecedee;
+			border-left: 10px solid rgba(0, 0, 0, 0);
+		}
+
+		.redPacketList {
+			width: 100%;
+			height: calc(100% - 160px);
+			overflow-y: scroll;
+			overflow-x: hidden;
+			padding: 15px;
+			box-sizing: border-box;
+
+			.rpl-item {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin: 5px 0;
+				padding: 5px;
+				background: #fff;
+
+				.rpl-img {
+					width: 38px;
+					height: 38px;
+					border-radius: 5px;
+				}
+
+				.rpl-time {
+					font-size: 12px;
+					color: rgba(0, 0, 0, 0.38);
+				}
+
+				.rpl-info {
+					display: flex;
+					flex-direction: column;
+					justify-content: flex-start;
+					width: 65%;
+					text-align: left;
+					margin-left: 5px;
+				}
+
+				.rpl-tag {
+					display: inline-table;
+					padding: 0 5px;
+					line-height: 20px;
+					height: 20px;
+					max-width: 95px;
+					text-align: center;
+					font-size: 12px;
+					border-radius: 5px;
+					border: 1px solid #fff;
+				}
+
+				.isMax {
+					background-color: #60b044;
+					border-color: #5ca941;
+					color: #fff;
+				}
+
+				.is0 {
+					border-color: #D5D5D5;
+					background-color: rgba(255, 255, 255, .2);
+					color: #faa;
+				}
+
+				.isNeg {
+					border-color: #D5D5D5;
+					background-color: rgba(255, 255, 255, .2);
+					color: #000;
+				}
+
+				.rpl-money {
+					width: 25%;
+					font-size: 12px;
+					text-align: right;
+				}
+			}
+
+			.rpl-item:not(:last-child) {
+				border-bottom: 1px dotted #999;
+			}
+		}
+	}
+
+
+
+	.faceBox {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex-wrap: wrap;
+		width: 100%;
+		height: 200px;
+		overflow-y: scroll;
+	}
+
+	.face-item {
+		min-width: 50px;
+		max-width: 50px;
+		min-height: 50px;
+		max-height: 50px;
+		margin: 5px;
+	}
+
+	.voice-btn {
+		width: 70px;
+		height: 100px;
+		margin: 0 auto;
+	}
+
+	.voice-time {
+		text-align: center;
+	}
+
+	.voice-img {
+		width: 70px;
+		height: 70px;
+
+	}
+
+	.longTap-list {
+		position: fixed;
+		left: 50%;
+		top: -25vw;
+		z-index: 100;
+		display: flex;
+		padding: 10px;
+		min-width: 100px;
+		height: 20px;
+		font-size: 12px;
+		background: #fff;
+		box-shadow: 0 2px 2px #6c6c6c;
+		border-top-right-radius: 10px;
+		border-bottom-left-radius: 10px;
+	}
+
+	.longTap-item {
+		margin: 0 5px;
+		height: 20px;
+		line-height: 20px;
+	}
+
+	.backTobottom {
+		position: fixed;
+		z-index: 1001;
+		bottom: 100px;
+		right: 15px;
+		width: 100px;
+		height: 30px;
+		line-height: 30px;
+		font-size: 12px;
+		text-align: center;
+		color: #4CD964;
+		background: #fff;
+		border-bottom: 1px solid #333333;
+	}
+
+	.SocketCloseMsg {
+		position: fixed;
+		left: 0;
+		z-index: 1001;
+		width: 100%;
+		height: 30px;
+		line-height: 30px;
+		font-size: 12px;
+		text-align: center;
+		color: #FFFFFF;
+		background: #f56c6c;
+	}
+
+	.textLink {
+		text-decoration: underline;
+		margin-left: 5px;
+	}
+
+	.db-users {
+		padding: 5px 0 5px 10px;
+		max-width: 70vw;
+		display: flex;
+		justify-content: flex-start;
+		align-items: center;
+		flex-wrap: wrap;
+
+		.db-user {
+			margin-left: -5px;
+		}
+
+		.db-avatar {
+			width: 25px;
+			height: 25px;
+			border-radius: 50%;
+		}
+
+		.db-word {
+			font-size: 10px;
+			color: #fff;
+			display: inline-block;
+			padding-left: 5px;
+		}
+	}
 </style>
 <style>
-	.contentBox>>>a { 
+	.contentBox>>>a {
 		color: #6a737d;
 		text-decoration: none !important;
 		border-bottom: 1px dashed #6a737d;
 	}
-	
+
 	.contentBox>>>img {
 		max-width: 55vw;
 	}
-	
+
 	.contentBox>>>blockquote {
 		color: #6a737d;
 		border-left: .25em solid #eaecef;
 		padding-left: 1em;
 		margin: 5px 0;
 	}
-	
+
 	.contentBox>>>ol {
 		padding-left: 20px;
 	}

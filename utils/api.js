@@ -107,7 +107,6 @@ export const checkCollectedLiveness = params =>{
 export const xiaoIceApi = params =>{
 	return UTIL.flirt({
 		url: "https://pwl.yuis.cc/api",
-		// url: "http://127.0.0.1:3002/api",
 		data: params
 	})
 }

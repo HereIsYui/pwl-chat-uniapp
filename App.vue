@@ -1,7 +1,26 @@
 <script>
 	export default {
 		globalData: {
-			apiKey: ""
+			apiKey: "",
+			content: [],
+		},
+
+		methods: {
+			watch: function(method, istr) {
+				var obj = this.globalData
+				console.log(obj)
+				Object.defineProperty(obj, istr, {
+					configurable: true,
+					enumerable: true,
+					set: function(value) {
+						this._consumerGoodsStatus = value
+						method(value)
+					},
+					get: function(value) {
+						return this._consumerGoodsStatus
+					}
+				})
+			}
 		},
 		onLaunch: function() {
 			console.log('App Launch')
@@ -23,6 +42,7 @@
 
 <style lang="scss">
 	@import "@/uni_modules/uview-ui/index.scss";
+
 	/*每个页面公共css */
 	.MainBox {
 		.u-cell__left-icon-wrap {
@@ -30,4 +50,3 @@
 		}
 	}
 </style>
-
