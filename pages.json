@@ -54,26 +54,58 @@
 
 				}
 			}
+		}, {
+			"path": "pages/tabbar/chatList/chatList",
+			"style": {
+				"navigationBarTitleText": "摸鱼派",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/xiaoice/xiaoice",
+			"style": {
+				"navigationBarTitleText": "小冰",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/tabbar/user/user",
+			"style": {
+				"navigationBarTitleText": "个人信息",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/tabbar/bbs/bbs",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/tabbar/find/find",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
 		}
-	    ,{
-            "path" : "pages/tabbar/chatList/chatList",
-            "style" :                                                                                    
-            {
-                "navigationBarTitleText": "摸鱼派",
-                "enablePullDownRefresh": false
-            }
-            
-        }
-        ,{
-            "path" : "pages/xiaoice/xiaoice",
-            "style" :                                                                                    
-            {
-                "navigationBarTitleText": "小冰",
-                "enablePullDownRefresh": false
-            }
-            
-        }
-    ],
+	],
+	"tabBar": {
+		"list": [{
+			"pagePath": "pages/tabbar/chatList/chatList",
+			"text": "聊天"
+		}, {
+			"pagePath": "pages/tabbar/bbs/bbs",
+			"text": "社区"
+		}, {
+			"pagePath": "pages/tabbar/find/find",
+			"text": "发现"
+		}, {
+			"pagePath": "pages/tabbar/user/user",
+			"text": "我"
+		}]
+	},
 	"globalStyle": {
 		"navigationBarTextStyle": "white",
 		"navigationBarTitleText": "摸鱼派",

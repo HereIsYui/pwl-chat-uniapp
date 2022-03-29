@@ -8,10 +8,14 @@ const store = new Vuex.Store({
 		secondMsg:null,
 		firstMsg:null,
 		xiaoIce:[],
+		userInfo:null,
 	},
 	mutations: {
 		setApiKey(state, val) {
 			state.apiKey = val;
+		},
+		setUserInfo(state, val) {
+			state.userInfo = val;
 		},
 		setContent(state, val) {
 			state.content = val;

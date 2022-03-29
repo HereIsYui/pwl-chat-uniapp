@@ -1,27 +1,29 @@
 <template>
 	<view>
-		<view class="MainBox" v-if="index == 0">
+		<view class="MainBox">
 			<u-cell-group>
 				<u-cell title="摸鱼派聊天室" iconStyle="margin-right:20px" isLink url="/pages/chat/chat">
-					<view slot="label" class="newInfo">{{lastMsg}}</view>
+					<view slot="label" class="newInfo u-line-1">{{lastMsg}}</view>
 					<u--image src="/static/logo_square.png" width="40px" height="40px" shape="square" radius="5"
 						slot="icon"></u--image>
-						<view slot="right-icon" class="newInfo">{{lastMsgTime}}</view>
+					<view slot="right-icon" class="newInfo">{{lastMsgTime}}</view>
 					<!-- <u-badge value="99" :absolute="false" slot="right-icon"></u-badge> -->
 				</u-cell>
 				<u-cell title="小冰" label="[图片]" iconStyle="margin-right:20px" isLink url="/pages/xiaoice/xiaoice">
+					<view slot="label" class="newInfo u-line-1">{{xiaoIceLastMsg}}</view>
 					<u--image src="/static/avatar/xiaoIce.png" width="40px" height="40px" shape="square" radius="5"
 						slot="icon"></u--image>
-					<u-badge value="0" :absolute="false" slot="right-icon"></u-badge>
+					<!-- <u-badge value="0" :absolute="false" slot="right-icon"></u-badge> -->
+					<view slot="right-icon" class="newInfo">{{xiaoIceLastTime}}</view>
 				</u-cell>
 			</u-cell-group>
 		</view>
-		<u-tabbar :value="index" @change="change1" :fixed="true" :placeholder="false">
+		<!-- <u-tabbar :value="index" @change="change1" :fixed="true" :placeholder="false">
 			<u-tabbar-item text="聊天" icon="chat" @click="click1"></u-tabbar-item>
 			<u-tabbar-item text="社区" icon="file-text" @click="click1"></u-tabbar-item>
 			<u-tabbar-item text="发现" icon="bookmark" @click="click1"></u-tabbar-item>
 			<u-tabbar-item text="我" icon="account" @click="click1"></u-tabbar-item>
-		</u-tabbar>
+		</u-tabbar> -->
 		<u-notify :message="JoinChatMsg" :show="isSocketClose"></u-notify>
 	</view>
 </template>
@@ -29,7 +31,8 @@
 <script>
 	import {
 		WS,
-		getMorePage
+		getMorePage,
+		getUserInfo
 	} from '../../../utils/api.js';
 	import {
 		mapGetters,
@@ -50,12 +53,27 @@
 					openAppPush: true,
 					rpSkin: "WX"
 				},
-				lastMsg:null,
-				lastMsgTime:"",
-				isSocketClose:false,
-				JoinChat:null,
-				JoinChatTime:30,
-				JoinChatMsg:"",
+				lastMsg: null,
+				lastMsgTime: "",
+				isSocketClose: false,
+				xiaoIceMsg: [],
+				xiaoIceLastMsg: null,
+				xiaoIceLastTime: null,
+				JoinChat: null,
+				JoinChatTime: 30,
+				JoinChatMsg: "",
+				defaultxiaoIceMessage: {
+					content: "<p>有话快说</p>",
+					dbUser: [],
+					md: null,
+					oId: 0,
+					sysMetal: `{"list":[{"data":"","name":"小冰","description":"摸鱼派官方认证机器人（已备案）","attr":"url=https://www.lingmx.com/52pj/images/xiaoIce.jpg&backcolor=B9CDF6&fontcolor=ffffff","enabled":true}]}`,
+					time: "2099-12-31 23:59:59",
+					type: "msg",
+					userAvatarURL: "https://pwl.stackoverflow.wiki/2021/12/blob-3ff70c59.png",
+					userName: "xiaoIce",
+					userNickname: "小冰工作号"
+				}
 			}
 		},
 		onLoad() {
@@ -65,6 +83,10 @@
 			this.initChat();
 			this.getPage(1);
 			let setting = uni.getStorageSync('setting');
+			let xiaoIceMsg = this.defaultxiaoIceMessage;
+			xiaoIceMsg.oId = new Date().getTime();
+			this.upDateXiaoIce(xiaoIceMsg);
+			this.getInfo()
 			try {
 				setting = JSON.parse(setting);
 				this.setting = setting;
@@ -86,24 +108,30 @@
 				}, 1000)
 			});
 		},
+		watch: {
+			'$store.state.xiaoIce'(newVal, oldVal) {
+				//对数据进行操作
+				this.xiaoIceMsg = newVal;
+				this.lastMsgInfo(newVal[newVal.length - 1], true);
+			}
+		},
 		methods: {
-			...mapMutations(['setContent', 'upDateContent', 'setFirstMsg', 'setSecondMsg']),
-			click1(e) {
-				console.log('click1', e);
-			},
-			change1(value) {
-				this.index = value;
-			},
-			lastMsgInfo(msg) {
+			...mapMutations(['upDateXiaoIce', 'setContent', 'upDateContent', 'setFirstMsg', 'setSecondMsg',
+			'setUserInfo']),
+			lastMsgInfo(msg, isXiaoIce) {
 				let rule = msg.content.replace(/<img\/?.+?>/g, "[图片]");
 				let rule2 = rule.replace(/<\/?.+?>/g, "");
 				let lastMsg = rule2.replace(/ /g, "");
-				// lastMsg = rule2.replace(/ /g, "");
-				this.lastMsg = `${msg.userName}:${lastMsg}`;
-				this.lastMsgTime = this.fillterTime(msg.time);
+				if (isXiaoIce) {
+					this.xiaoIceLastMsg = `${msg.userName}:${lastMsg}`;
+					this.xiaoIceLastTime = this.fillterTime(msg.time);
+				} else {
+					this.lastMsg = `${msg.userName}:${lastMsg}`;
+					this.lastMsgTime = this.fillterTime(msg.time);
+				}
 			},
-			fillterTime(time){
-				let time1 = time.substr(-8,5);
+			fillterTime(time) {
+				let time1 = time.substr(-8, 5);
 				return time1
 			},
 			initChat() {
@@ -157,7 +185,8 @@
 						this.filterMsg(msg);
 						// #ifdef APP-PLUS
 						// 测试app推送@
-						if (msg.content.indexOf(`aria-label="${this.data.userName}"`) >= 0 && !this.isAppShow && this.setting.openAppPush) {
+						if (msg.content.indexOf(`aria-label="${this.data.userName}"`) >= 0 && !this.isAppShow && this
+							.setting.openAppPush) {
 							plus.push.createMessage(`${msg.userName}@你了`);
 							plus.nativeUI.toast(`${msg.userName}@你了`, {
 								verticalAlign: "top",
@@ -284,12 +313,31 @@
 					}
 				}
 			},
+			getInfo() {
+				getUserInfo(this.data.userName).then(res => {
+					if (res.cardBg == "") {
+						res.cardBg = "https://pwl.stackoverflow.wiki/2021/11/32ceecb7798ea1fa-82bd6ec7.jpg"
+					}
+					// #ifdef H5
+					let bg = encodeURI(res.cardBg)
+					bg = btoa(bg)
+					let avatar = encodeURI(res.userAvatarURL)
+					avatar = btoa(avatar)
+					res.cardBg = "https://pwl.yuis.cc/GetImage?url=" + bg
+					res.userAvatarURL = "https://pwl.yuis.cc/GetImage?url=" + avatar
+					// #endif
+					if (res.sysMetal) {
+						res.sysMetal = JSON.parse(res.sysMetal)
+					}
+					this.setUserInfo(userInfo)
+				})
+			},
 		}
 	}
 </script>
 
 <style lang="scss">
-	.newInfo{
+	.newInfo {
 		font-size: 12px;
 		color: #888;
 	}
