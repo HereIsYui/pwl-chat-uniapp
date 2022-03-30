@@ -2,8 +2,8 @@
     "name" : "摸鱼派",
     "appid" : "__UNI__C1F4B2F",
     "description" : "摸鱼派聊天室",
-    "versionName" : "0.1.4",
-    "versionCode" : 114,
+    "versionName" : "0.1.5",
+    "versionCode" : 115,
     "transformPx" : false,
     /* 5+App特有相关 */
     "app-plus" : {
@@ -15,6 +15,11 @@
             "waiting" : true,
             "autoclose" : true,
             "delay" : 0
+        },
+        "safearea" : {
+            "bottom" : {
+                "offset" : "none"
+            }
         },
         /* 模块配置 */
         "modules" : {

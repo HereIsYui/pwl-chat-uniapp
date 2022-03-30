@@ -71,38 +71,67 @@
 		}, {
 			"path": "pages/tabbar/user/user",
 			"style": {
-				"navigationBarTitleText": "个人信息",
+				"navigationBarTitleText": "",
 				"enablePullDownRefresh": false
 			}
 
 		}, {
 			"path": "pages/tabbar/bbs/bbs",
 			"style": {
-				"navigationBarTitleText": "",
+				"navigationBarTitleText": "社区",
 				"enablePullDownRefresh": false
 			}
 
 		}, {
 			"path": "pages/tabbar/find/find",
 			"style": {
-				"navigationBarTitleText": "",
-				"enablePullDownRefresh": false
+				"navigationBarTitleText": "清风明月",
+				"enablePullDownRefresh": false,
+				"app-plus": {
+					"titleNView": {
+						"buttons": [{
+							"type": "none",
+							"float": "right",
+							"text": "\u002B"
+						}]
+					}
+				}
 			}
-
+		},
+		{
+			"path": "pages/tabbar/find/addBree",
+			"style": {
+				"navigationBarTitleText": "发表清风明月",
+				"enablePullDownRefresh": false,
+				"backgroundColor":"#3b3e43"
+			}
+		
 		}
 	],
 	"tabBar": {
+		"selectedColor": "#000",
+		"blurEffect": "extralight",
+		"color": "#999999",
+		"spacing": "5px",
 		"list": [{
 			"pagePath": "pages/tabbar/chatList/chatList",
+			"iconPath": "static/icon/chat.png",
+			"selectedIconPath": "static/icon/chat.png",
 			"text": "聊天"
 		}, {
 			"pagePath": "pages/tabbar/bbs/bbs",
+			"iconPath": "static/icon/bbs.png",
+			"selectedIconPath": "static/icon/bbs.png",
 			"text": "社区"
 		}, {
 			"pagePath": "pages/tabbar/find/find",
+			"iconPath": "static/icon/find.png",
+			"selectedIconPath": "static/icon/find.png",
 			"text": "发现"
 		}, {
 			"pagePath": "pages/tabbar/user/user",
+			"iconPath": "static/icon/user.png",
+			"selectedIconPath": "static/icon/user.png",
 			"text": "我"
 		}]
 	},

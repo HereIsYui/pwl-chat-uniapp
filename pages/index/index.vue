@@ -106,9 +106,6 @@
 						uni.setStorageSync('apiKey', apiKey)
 						getApp().globalData.data = res.data;
 						getApp().globalData.apiKey = apiKey;
-						// uni.reLaunch({
-						// 	url: '/pages/chat/chat'
-						// })
 						uni.reLaunch({
 							url:'/pages/tabbar/chatList/chatList'
 						})

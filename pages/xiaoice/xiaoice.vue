@@ -141,31 +141,31 @@
 					let msg = JSON.parse(JSON.stringify(that.defaultxiaoIceMessage));
 					msg.content = res.msg;
 					msg.oId = new Date().getTime();
-					that.upDateXiaoIce(msg)
+					that.upDateXiaoIce(msg);
+					that.scrollToBottom();
 				}).catch(err => {
 					console.log(err)
 					let msg = JSON.parse(JSON.stringify(that.defaultxiaoIceMessage));
 					msg.content = "小冰API连接超时啦~";
 					userMsg.oId = new Date().getTime();
-					that.upDateXiaoIce(msg)
+					that.upDateXiaoIce(msg);
+					that.scrollToBottom();
 				})
 			},
 			scrollToBottom() {
-				if (this.scrollPower) {
-					let query = uni.createSelectorQuery()
-					query.select('.contentBox').boundingClientRect()
-					query.selectViewport().scrollOffset()
-					query.exec(res => {
-						if (res[0]) {
-							setTimeout(() => {
-								uni.pageScrollTo({
-									scrollTop: res[0].height,
-									duration: 100
-								})
-							}, 100)
-						}
-					})
-				}
+				let query = uni.createSelectorQuery()
+				query.select('.contentBox').boundingClientRect()
+				query.selectViewport().scrollOffset()
+				query.exec(res => {
+					if (res[0]) {
+						setTimeout(() => {
+							uni.pageScrollTo({
+								scrollTop: res[0].height,
+								duration: 100
+							})
+						}, 100)
+					}
+				})
 			},
 		}
 	}

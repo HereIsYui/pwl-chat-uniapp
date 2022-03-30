@@ -14,7 +14,9 @@ const API = {
 	icl: baseURL + "/api/activity/is-collected-liveness",
 	open: baseURL + "/chat-room/red-packet/open",
 	getface: baseURL + "/api/cloud/get",
-	upload: baseURL + "/upload"
+	upload: baseURL + "/upload",
+	bree: baseURL + "/api/breezemoons",
+	sendBree: baseURL + "/breezemoon",
 }
 
 export const WS = {
@@ -70,8 +72,8 @@ export const faceList = params => {
 export const deleteMsg = params => {
 	return UTIL.flirt({
 		url: API.delete + params.oId,
-		data:{
-			apiKey:params.apiKey
+		data: {
+			apiKey: params.apiKey
 		},
 		method: "DELETE"
 	})
@@ -83,28 +85,28 @@ export const getUserInfo = params => {
 	})
 }
 
-export const getLiveness = params =>{
+export const getLiveness = params => {
 	return UTIL.flirt({
 		url: API.liveness,
 		data: params
 	})
 }
 
-export const getYesterdayLiveness = params =>{
+export const getYesterdayLiveness = params => {
 	return UTIL.flirt({
 		url: API.ylra,
 		data: params
 	})
 }
 
-export const checkCollectedLiveness = params =>{
+export const checkCollectedLiveness = params => {
 	return UTIL.flirt({
 		url: API.icl,
 		data: params
 	})
 }
 
-export const xiaoIceApi = params =>{
+export const xiaoIceApi = params => {
 	return UTIL.flirt({
 		url: "https://pwl.yuis.cc/api",
 		data: params
@@ -114,11 +116,11 @@ export const xiaoIceApi = params =>{
 export const upload = params => {
 	return new Promise((resolve, reject) => {
 		uni.uploadFile({
-			url: API.upload, 
+			url: API.upload,
 			filePath: params,
 			name: 'file[]',
-			header:{
-				"enctype":"multipart/form-data"
+			header: {
+				"enctype": "multipart/form-data"
 			},
 			success: res => {
 				resolve(res)
@@ -129,4 +131,19 @@ export const upload = params => {
 		});
 	})
 
+}
+
+export const getBree = params =>{
+	return UTIL.flirt({
+		url: API.bree,
+		data: params
+	})
+}
+
+export const sendBree = params => {
+	return UTIL.flirt({
+		url: API.sendBree,
+		data: params,
+		method: "POST"
+	})
 }

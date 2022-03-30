@@ -18,12 +18,6 @@
 				</u-cell>
 			</u-cell-group>
 		</view>
-		<!-- <u-tabbar :value="index" @change="change1" :fixed="true" :placeholder="false">
-			<u-tabbar-item text="聊天" icon="chat" @click="click1"></u-tabbar-item>
-			<u-tabbar-item text="社区" icon="file-text" @click="click1"></u-tabbar-item>
-			<u-tabbar-item text="发现" icon="bookmark" @click="click1"></u-tabbar-item>
-			<u-tabbar-item text="我" icon="account" @click="click1"></u-tabbar-item>
-		</u-tabbar> -->
 		<u-notify :message="JoinChatMsg" :show="isSocketClose"></u-notify>
 	</view>
 </template>
@@ -63,7 +57,7 @@
 				JoinChatTime: 30,
 				JoinChatMsg: "",
 				defaultxiaoIceMessage: {
-					content: "<p>有话快说</p>",
+					content: "<p>有话快说,这里指令不用加小冰哦~</p>",
 					dbUser: [],
 					md: null,
 					oId: 0,
@@ -94,6 +88,7 @@
 			} catch (e) {
 				//TODO handle the exception
 			}
+			let that = this;
 			uni.onSocketClose(function(res) {
 				console.log('WebSocket 已关闭！');
 				that.isSocketClose = true;
@@ -211,7 +206,6 @@
 				if (page == 1) {
 					this.content = [];
 				}
-				this.scrollPower = false;
 				getMorePage({
 					page: page,
 					apiKey: this.apiKey
@@ -251,9 +245,7 @@
 			filterMsg(msg) {
 				let that = this;
 				msg.dbUser = msg.dbUser || [];
-				// console.log(this.content.length >= 2 && msg.content == this.content[this.content.length - 1].content)
-				if (msg.type == 'msg' && !this.isJSON(msg) && this.content.length >= 2 && msg.content == this.content[this
-						.content.length - 1].content) {
+				if (msg.type == 'msg' && !this.isJSON(msg) && this.content.length >= 2 && msg.content == this.content[this.content.length - 1].content) {
 					this.content[this.content.length - 1].dbUser = this.content[this.content.length - 1].dbUser || []
 					this.content[this.content.length - 1].dbUser.push(msg)
 				} else if (this.isJSON(msg.content)) {
