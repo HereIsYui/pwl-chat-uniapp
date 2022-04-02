@@ -107,7 +107,24 @@
 			}
 		
 		}
-	],
+	    ,{
+            "path" : "pages/index/register",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "注册",
+                "enablePullDownRefresh": false
+            }
+            
+        },{
+            "path" : "pages/tabbar/user/mz",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "免责条款",
+                "enablePullDownRefresh": false
+            }
+            
+        }
+    ],
 	"tabBar": {
 		"selectedColor": "#000",
 		"blurEffect": "extralight",

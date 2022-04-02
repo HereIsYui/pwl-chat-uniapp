@@ -1,6 +1,6 @@
 <template>
-	<view class="MainBox">
-		<view class="user-card" v-if="userInfo"  @click="toUserInfo(userInfo.userName)">
+	<view class="MainBox" v-if="userInfo">
+		<view class="user-card"  @click="toUserInfo(userInfo.userName)">
 			<u-avatar :src="userInfo.userAvatarURL" shape="square" size="60"></u-avatar>
 			<view class="user-detail-box">
 				<view class="user-nickName">{{userInfo.userNickname || userInfo.userName}}</view>
@@ -11,7 +11,8 @@
 		<u-gap height="20" bgColor="#f0f0f0"></u-gap>
 		<u-cell-group class="cell-group">
 			<u-cell icon="setting-fill" title="个人设置" isLink url="/pages/chat/setting"></u-cell>
-			<u-cell icon="integral-fill" title="会员等级" value="普通会员"></u-cell>
+			<u-cell icon="integral-fill" title="会员等级" :value="userInfo.vip ? '终身SVIP会员' : '普通会员'"></u-cell>
+			<u-cell icon="info-circle-fill" title="隐私政策" isLink url="/pages/tabbar/user/mz"></u-cell>
 		</u-cell-group>
 		<u-gap height="20" bgColor="#f0f0f0"></u-gap>
 		<u-cell-group class="cell-group">
@@ -22,11 +23,13 @@
 
 <script>
 	import {
-		getUserInfo
+		getUserInfo,
+		xiaoIceVip
 	} from '../../../utils/api.js'
 	export default {
 		data() {
 			return {
+				data:{},
 				userInfo: {},
 				lvNum:"114"
 			}
@@ -35,11 +38,24 @@
 			this.userInfo = this.$store.state.userInfo;
 			this.data = getApp().globalData.data || uni.getStorageSync('userData');
 			this.getInfo();
+			this.getXiaoIceVip();
 			// #ifdef APP-PLUS
 			this.getVersion();
 			// #endif
 		},
 		methods: {
+			getXiaoIceVip(){
+				xiaoIceVip({
+					user: this.data.userName,
+					key: "xiaoIce"
+				}).then(res=>{
+					if(res.code == 200){
+						if(res.vip){
+							this.userInfo.vip = true;
+						}
+					}
+				})
+			},
 			toUserInfo(user) {
 				uni.navigateTo({
 					url: "/pages/chat/userInfo??user=" + user,
@@ -67,7 +83,7 @@
 						res.sysMetal = JSON.parse(res.sysMetal)
 					}
 					this.userInfo = res;
-					this.setUserInfo(userInfo)
+					this.setUserInfo(userInfo);
 				})
 			},
 		}

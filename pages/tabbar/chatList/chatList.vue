@@ -112,7 +112,8 @@
 		},
 		methods: {
 			...mapMutations(['upDateXiaoIce', 'setContent', 'upDateContent', 'setFirstMsg', 'setSecondMsg',
-			'setUserInfo']),
+				'setUserInfo'
+			]),
 			lastMsgInfo(msg, isXiaoIce) {
 				let rule = msg.content.replace(/<img\/?.+?>/g, "[图片]");
 				let rule2 = rule.replace(/<\/?.+?>/g, "");
@@ -180,14 +181,18 @@
 						this.filterMsg(msg);
 						// #ifdef APP-PLUS
 						// 测试app推送@
-						if (msg.content.indexOf(`aria-label="${this.data.userName}"`) >= 0 && !this.isAppShow && this
-							.setting.openAppPush) {
-							plus.push.createMessage(`${msg.userName}@你了`);
-							plus.nativeUI.toast(`${msg.userName}@你了`, {
-								verticalAlign: "top",
-								align: "center",
-								background: "#fff"
-							});
+						try {
+							if (msg.content.indexOf(`aria-label="${this.data.userName}"`) >= 0 && !this.isAppShow && this
+								.setting.openAppPush) {
+								plus.push.createMessage(`${msg.userName}@你了`);
+								plus.nativeUI.toast(`${msg.userName}@你了`, {
+									verticalAlign: "top",
+									align: "center",
+									background: "#fff"
+								});
+							}
+						} catch (e) {
+							//TODO handle the exception
 						}
 						// #endif
 						if (this.content.length > 500) {
@@ -245,7 +250,8 @@
 			filterMsg(msg) {
 				let that = this;
 				msg.dbUser = msg.dbUser || [];
-				if (msg.type == 'msg' && !this.isJSON(msg) && this.content.length >= 2 && msg.content == this.content[this.content.length - 1].content) {
+				if (msg.type == 'msg' && !this.isJSON(msg) && this.content.length >= 2 && msg.content == this.content[this
+						.content.length - 1].content) {
 					this.content[this.content.length - 1].dbUser = this.content[this.content.length - 1].dbUser || []
 					this.content[this.content.length - 1].dbUser.push(msg)
 				} else if (this.isJSON(msg.content)) {

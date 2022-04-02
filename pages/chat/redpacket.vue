@@ -1,11 +1,12 @@
 <template>
 	<view class="redpacketBox">
 		<view class="rpTitle">
-			<view class="borderLine" :style="{left:index * 25 + 2.5 + '%'}"></view>
-			<view class="rpItem" @click="changeType(0,'random')" :class="index == 0 ? 'active' : ''">拼手气红包</view>
+			<view class="borderLine" :style="{left:index * 20 + '%'}"></view>
+			<view class="rpItem" @click="changeType(0,'random')" :class="index == 0 ? 'active' : ''">拼手气</view>
 			<view class="rpItem" @click="changeType(1,'average')" :class="index == 1 ? 'active' : ''">普通红包</view>
 			<view class="rpItem" @click="changeType(2,'specify')" :class="index == 2 ? 'active' : ''">专属红包</view>
 			<view class="rpItem" @click="changeType(3,'heartbeat')" :class="index == 3 ? 'active' : ''">心跳红包</view>
+			<view class="rpItem" @click="changeType(4,'rockPaperScissors')" :class="index == 4 ? 'active' : ''">猜拳红包</view>			
 		</view>
 		<view class="rpForm" :style="{left: -index * 100 + 'vw'}">
 			<view class="rpFromItem">
@@ -89,9 +90,32 @@
 						class="rpInput" maxlength="12" />
 				</view>
 			</view>
+			<view class="rpFromItem">
+				<view class="formItem">
+					<view class="rpLabel">猜拳:</view>
+					<u-radio-group v-model="redpacket.gesture" placement="row" @change="selectGame">
+						<u-radio shape="square" :customStyle="{marginRight: '10px'}" activeColor="red" labelColor="#f0f0f0" label="石头 " :name="0"></u-radio>
+						<u-radio shape="square" :customStyle="{marginRight: '10px'}" activeColor="red" labelColor="#f0f0f0" label="剪刀 " :name="1"></u-radio>
+						<u-radio shape="square" :customStyle="{marginRight: '10px'}" activeColor="red" labelColor="#f0f0f0" label="布 " :name="2"></u-radio>
+					</u-radio-group>
+				</view>
+				<view class="formItem">
+					<view class="rpLabel">积分:</view>
+					<input type="number" v-model="redpacket.money" class="rpInput" />
+				</view>
+				<view class="formItem">
+					<view class="rpLabel">个数:</view>
+					<input type="number" v-model="redpacket.count" class="rpInput" />
+				</view>
+				<view class="formItem">
+					<view class="rpLabel">留言:</view>
+					<input type="text" v-model="redpacket.msg" :placeholder="defaultRedpackWord['heartbeat']"
+						class="rpInput" maxlength="12" />
+				</view>
+			</view>
 		</view>
 		<view class="btnGroup">
-			<view class="btn warning" @click="send(false)">十连发</view>
+			<!-- <view class="btn warning" @click="send(false)">十连发</view> -->
 			<view class="btn success" @click="send(true)">发送</view>
 		</view>
 	</view>
@@ -112,13 +136,15 @@
 					money: 32,
 					count: 2,
 					msg: "",
+					gesture: 0,
 					recivers: []
 				},
 				defaultRedpackWord: {
 					random: '摸鱼者，事竟成！',
 					average: '平分红包，人人有份！',
 					specify: '试试看，这是给你的红包吗？',
-					heartbeat: '玩的就是心跳！'
+					heartbeat: '玩的就是心跳！',
+					rockPaperScissors: '石头剪刀布！'
 				},
 				users: [],
 				checkedUserAvatar: []
@@ -209,6 +235,9 @@
 				this.checkedUserAvatar = checkedUserAvatar;
 				// console.log(e.detail.value)
 			},
+			selectGame(e) {
+				this.redpacket.gesture = e;
+			},
 			changeType(value, type) {
 				this.index = value;
 				this.redpacket.type = type;
@@ -260,7 +289,7 @@
 
 	.rpForm {
 		position: relative;
-		width: 400vw;
+		width: 500vw;
 		left: 0;
 		display: flex;
 		transition: .2s;

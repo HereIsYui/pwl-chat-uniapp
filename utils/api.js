@@ -113,6 +113,13 @@ export const xiaoIceApi = params => {
 	})
 }
 
+export const xiaoIceVip = params => {
+	return UTIL.flirt({
+		url: "https://pwl.yuis.cc/VIP",
+		data: params
+	})
+}
+
 export const upload = params => {
 	return new Promise((resolve, reject) => {
 		uni.uploadFile({
@@ -133,7 +140,7 @@ export const upload = params => {
 
 }
 
-export const getBree = params =>{
+export const getBree = params => {
 	return UTIL.flirt({
 		url: API.bree,
 		data: params

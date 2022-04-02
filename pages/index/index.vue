@@ -4,7 +4,10 @@
 		<view class="login-form-box" :class="{show : ShowLogin}">
 			<input class="login-input" v-model="nameOrEmail" type="text" placeholder="摸鱼派账号" />
 			<input class="login-input" v-model="userPassword" type="password" placeholder="摸鱼派密码" />
-			<button type="default" class="login-btn" @click="login">登录</button>
+			<view class="btnGroup">
+				<!-- <u-button type="info" @click="toReg()" text="注册"></u-button> -->
+				<u-button type="success" @click="login()" text="登录"></u-button>
+			</view>
 		</view>
 	</view>
 </template>
@@ -30,10 +33,10 @@
 		},
 		methods: {
 			init() {
-				try{
+				try {
 					let apiKey = uni.getStorageSync('apiKey');
 					let data = uni.getStorageSync('userData');
-					
+
 					if (!apiKey) {
 						// 检查是否有保存的账号密码
 						let nameOrEmail = uni.getStorageSync("nameOrEmail")
@@ -65,13 +68,19 @@
 						// 看看登录信息过期没有
 						this.CheckUser(apiKey)
 					}
-				}catch(e){
+				} catch (e) {
 					// 你丫的登录信息没了，快去登录
 					setTimeout(() => {
 						this.ShowLogin = true;
 					}, 100)
 				}
 
+			},
+			toReg() {
+				console.log(111)
+				uni.navigateTo({
+					url: "/pages/index/register"
+				})
 			},
 			login() {
 				let that = this;
@@ -107,7 +116,7 @@
 						getApp().globalData.data = res.data;
 						getApp().globalData.apiKey = apiKey;
 						uni.reLaunch({
-							url:'/pages/tabbar/chatList/chatList'
+							url: '/pages/tabbar/chatList/chatList'
 						})
 					} else {
 						// 你丫的登录信息过期了，快去登录
@@ -169,6 +178,12 @@
 		background-color: #60b044;
 		color: #fff;
 		box-sizing: border-box;
+	}
+
+	.btnGroup {
+		display: flex;
+		width: 80vw;
+		margin: 0 5vw;
 	}
 
 	@keyframes go {

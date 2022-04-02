@@ -19,7 +19,7 @@
 								</view>
 								<view class="userName" v-else>{{item.userName}}</view>
 							</template>
-							<view v-if="item.isMoney" @click="getMoney(item.oId)"
+							<view v-if="item.isMoney" @click="checkMoney(item)"
 								:class="setting.rpSkin == 'WX' ? 'wx-rp' : 'qq-rp'">
 								<view class="red-packet">
 									<view class="rp-header"></view>
@@ -118,6 +118,9 @@
 					<image class="rpi-user-img" :src="redpacketData.info.userAvatarURL" mode="aspectFill"></image>
 					<view>
 						<view class="rpi-user">{{redpacketData.info.userName}}'s的红包</view>
+						<view class="rpi-recivers" v-if="redpacketData.info.gesture">
+							{{redpacketData.info.userName}}出拳：{{["石头","剪刀","布"][redpacketData.info.gesture]}}
+						</view>
 						<view class="rpi-recivers"
 							v-if="redpacketData.recivers && redpacketData.recivers.length > 0 && redpacketData.recivers[0] != ''">
 							这个红包属于：{{redpacketData.recivers.join(",")}}</view>
@@ -146,7 +149,19 @@
 			:style="{bottom:(isShowFace || isSendVoice) ? '302px' : '102px'}" @click="toBottom()">
 			查看最新消息
 		</view>
-
+		<!-- 猜拳红包 -->
+		<u-popup :show="redPackGame.show" mode="center" closeable round="5" @close="redPackGame.show = false">
+			<view class="redPackGameBox">
+				<view class="">
+					<u-radio-group v-model="redPackGame.gesture" placement="row">
+						<u-radio shape="square" :customStyle="{marginRight: '10px'}" activeColor="red" labelColor="#333" label="石头 " :name="0"></u-radio>
+						<u-radio shape="square" :customStyle="{marginRight: '10px'}" activeColor="red" labelColor="#333" label="剪刀 " :name="1"></u-radio>
+						<u-radio shape="square" :customStyle="{marginRight: '10px'}" activeColor="red" labelColor="#333" label="布 " :name="2"></u-radio>
+					</u-radio-group>
+				</view>
+				<u-button type="success" @click="getMoney(redPackGame.oId)">抢</u-button>
+			</view>
+		</u-popup>
 	</view>
 </template>
 
@@ -178,7 +193,7 @@
 		},
 		data() {
 			return {
-				content:[],
+				content: [],
 				apiKey: "",
 				data: {},
 				msg: "",
@@ -207,7 +222,8 @@
 					random: "拼手气红包",
 					average: "普通红包",
 					specify: "专属红包",
-					heartbeat: "心跳红包"
+					heartbeat: "心跳红包",
+					rockPaperScissors: '石头剪刀布！'
 				},
 				defaultxiaoIceMessage: {
 					content: null,
@@ -250,6 +266,11 @@
 				voiceTime: 0,
 				isVoice: false,
 				isAppShow: true,
+				redPackGame: {
+					show: false,
+					oId: "",
+					gesture:0,
+				}
 			}
 		},
 		onPullDownRefresh() {
@@ -373,6 +394,7 @@
 			}
 		},
 		methods: {
+			...mapMutations(['setContent', 'upDateContent']),
 			toVoice(index) {
 				if (index == 0) {
 					permision.requestAndroidPermission("android.permission.RECORD_AUDIO").then(viocePower => {
@@ -430,16 +452,18 @@
 				})
 			},
 			getHistoryMsg() {
+				console.log("加载历史信息")
 				if (this.isHistory) {
 					return;
 				}
 				this.isHistory = true;
 				this.nowPage = this.nowPage + 1;
+				let that = this;
 				getMorePage({
 					page: this.nowPage,
 					apiKey: this.apiKey
 				}).then(res => {
-					this.isHistory = false;
+					that.isHistory = false;
 					uni.stopPullDownRefresh()
 					if (res.code == 0) {
 						let info = res.data;
@@ -448,22 +472,25 @@
 							// #ifdef H5
 							let userAvatar = encodeURI(msg.userAvatarURL)
 							userAvatar = btoa(userAvatar);
-							msg.userAvatarURL = `${this.setting.ImageLoadHome+userAvatar}`
+							msg.userAvatarURL = `${that.setting.ImageLoadHome+userAvatar}`
 							// #endif
-							if (this.isJSON(msg.content)) {
+							if (that.isJSON(msg.content)) {
 								msg.content = JSON.parse(msg.content)
 								msg.isMoney = true;
 							}
-							this.content.forEach(items => {
+							that.content.forEach(items => {
 								if (items.oId == msg.oId) {
 									msg.hide = true
 								}
 							})
 
 						})
-						info = this.mergeDoubleMsg(info)
-						this.content = info.concat(this.content)
+						info = that.mergeDoubleMsg(info)
+						that.setContent(info.concat(that.content))
+						console.log("加载完毕")
 					}
+				}).catch(err=>{
+					console.log(err)
 				})
 			},
 			mergeDoubleMsg(contents) {
@@ -643,7 +670,31 @@
 					}
 				})
 			},
+			isJSON(str) {
+				if (typeof str == 'string') {
+					try {
+						var obj = JSON.parse(str);
+						if (typeof obj == 'object' && obj) {
+							return true;
+						} else {
+							return false;
+						}
+			
+					} catch (e) {
+						return false;
+					}
+				}
+			},
+			checkMoney(msg) {
+				if (msg.content.type == "rockPaperScissors") {
+					this.redPackGame.show = true;
+					this.redPackGame.oId = msg.oId;
+				} else {
+					this.getMoney(msg.oId)
+				}
+			},
 			getMoney(oId) {
+				this.redPackGame.show = false;
 				let that = this;
 				openRedPacket({
 					oId: oId,
@@ -1378,6 +1429,15 @@
 			display: inline-block;
 			padding-left: 5px;
 		}
+	}
+	.redPackGameBox{
+		display: flex;
+		justify-content: space-around;
+		align-items: center;
+		flex-direction: column;
+		width: 75vw;
+		height: 100px;
+		padding: 15px;
 	}
 </style>
 <style>
