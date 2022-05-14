@@ -17,6 +17,12 @@ const API = {
 	upload: baseURL + "/upload",
 	bree: baseURL + "/api/breezemoons",
 	sendBree: baseURL + "/breezemoon",
+	report: baseURL + "/report",
+	articlesList: baseURL + "/api/articles/recent",
+	articlesListHot: baseURL + "/api/articles/recent/hot",
+	articlesListGood: baseURL + "/api/articles/recent/good",
+	articlesListReply: baseURL + "/api/articles/recent/reply",
+	articlesDetail: baseURL + "/api/article/"
 }
 
 export const WS = {
@@ -152,5 +158,46 @@ export const sendBree = params => {
 		url: API.sendBree,
 		data: params,
 		method: "POST"
+	})
+}
+
+export const report = params => {
+	return UTIL.flirt({
+		url: API.report,
+		data: params,
+		method: "POST",
+		header: {
+			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+		},
+	})
+}
+
+export const articlesList = params => {
+	return UTIL.flirt({
+		url: API.articlesList,
+		data: params
+	})
+}
+export const articlesListHot = params => {
+	return UTIL.flirt({
+		url: API.articlesListHot,
+		data: params
+	})
+}
+export const articlesListGood = params => {
+	return UTIL.flirt({
+		url: API.articlesListGood,
+		data: params
+	})
+}
+export const articlesListReply = params => {
+	return UTIL.flirt({
+		url: API.articlesListReply,
+		data: params
+	})
+}
+export const articlesDetail = params => {
+	return UTIL.flirt({
+		url: API.articlesDetail+params.oId+"?apiKey="+params.apiKey,
 	})
 }

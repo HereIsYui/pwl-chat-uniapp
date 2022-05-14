@@ -4,6 +4,7 @@
 		<view class="login-form-box" :class="{show : ShowLogin}">
 			<input class="login-input" v-model="nameOrEmail" type="text" placeholder="摸鱼派账号" />
 			<input class="login-input" v-model="userPassword" type="password" placeholder="摸鱼派密码" />
+			<input class="login-input" v-model="mfaCode" type="text" placeholder="两步认证码（如未设置留空）" />
 			<view class="btnGroup">
 				<!-- <u-button type="info" @click="toReg()" text="注册"></u-button> -->
 				<u-button type="success" @click="login()" text="登录"></u-button>
@@ -24,7 +25,8 @@
 			return {
 				ShowLogin: false,
 				nameOrEmail: "",
-				userPassword: ""
+				userPassword: "",
+				mfaCode: ""
 			}
 		},
 		onLoad() {
@@ -36,28 +38,15 @@
 				try {
 					let apiKey = uni.getStorageSync('apiKey');
 					let data = uni.getStorageSync('userData');
-
+					let that = this;
 					if (!apiKey) {
 						// 检查是否有保存的账号密码
 						let nameOrEmail = uni.getStorageSync("nameOrEmail")
 						let userPassword = uni.getStorageSync("userPassword")
 						if (nameOrEmail && userPassword) {
 							// 尝试登录
-							getKey({
-								nameOrEmail: nameOrEmail,
-								userPassword: userPassword
-							}).then(res => {
-								if (res.code == 0) {
-									// 先验证下,再滚去聊天室
-									that.CheckUser(res.Key)
-								} else {
-									// 报错就是你的错
-									// 你丫的登录信息错了，快去登录
-									setTimeout(() => {
-										this.ShowLogin = true;
-									}, 100)
-								}
-							})
+							that.nameOrEmail = nameOrEmail;
+							that.userPassword = userPassword;
 						} else {
 							// 你丫的登录信息没了，快去登录
 							setTimeout(() => {
@@ -77,7 +66,6 @@
 
 			},
 			toReg() {
-				console.log(111)
 				uni.navigateTo({
 					url: "/pages/index/register"
 				})
@@ -86,7 +74,8 @@
 				let that = this;
 				getKey({
 					nameOrEmail: this.nameOrEmail,
-					userPassword: SparkMD5.hash(this.userPassword)
+					userPassword: SparkMD5.hash(this.userPassword),
+					mfaCode: that.mfaCode
 				}).then(res => {
 					if (res.code == 0) {
 						console.log(res)
@@ -98,8 +87,9 @@
 					} else {
 						// 报错就是你的错
 						uni.showToast({
-							title: '账号密码错误!',
-							icon: 'error',
+							// title: '账号密码错误!',
+							title: res.msg,
+							icon: 'none',
 							duration: 2000
 						});
 					}

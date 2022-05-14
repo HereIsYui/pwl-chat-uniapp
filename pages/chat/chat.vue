@@ -1,5 +1,6 @@
 <template>
 	<view class="content">
+		<u-toast ref="uToast"></u-toast>
 		<!-- WebSocket断开提醒 -->
 		<view class="SocketCloseMsg" v-if="isSocketClose">
 			WebSocket已断开：{{JoinChatTime}}s后重新连接 <text class="textLink" @click="initChat()">点击重连</text>
@@ -42,6 +43,7 @@
 								<mp-html @load="scrollToBottom()" container-style="MessageBox" @ready="scrollToBottom()"
 									:copy-link="false" :content="item.content" :show-img-menu="false"
 									@linktap="showLink" />
+
 							</view>
 							<view class="db-users" v-if="item.dbUser.length">
 								<view class="db-user" v-for="db in item.dbUser" :key="db.oId">
@@ -110,6 +112,7 @@
 				撤回</view>
 			<view class="longTap-item" @click="longTapEvent(1)" v-else-if="data.userName == longData.userName">撤回</view>
 			<view class="longTap-item" @click="longTapEvent(2)">引用</view>
+			<view class="longTap-item" @click="longTapEvent(3)" v-if="data.userName != longData.userName">快捷举报</view>
 		</view>
 		<!-- 红包 -->
 		<view class="redPacketBg" v-show="showRedPacketData" @click.stop="showRedPacketData = false">
@@ -154,9 +157,12 @@
 			<view class="redPackGameBox">
 				<view class="">
 					<u-radio-group v-model="redPackGame.gesture" placement="row">
-						<u-radio shape="square" :customStyle="{marginRight: '10px'}" activeColor="red" labelColor="#333" label="石头 " :name="0"></u-radio>
-						<u-radio shape="square" :customStyle="{marginRight: '10px'}" activeColor="red" labelColor="#333" label="剪刀 " :name="1"></u-radio>
-						<u-radio shape="square" :customStyle="{marginRight: '10px'}" activeColor="red" labelColor="#333" label="布 " :name="2"></u-radio>
+						<u-radio shape="square" :customStyle="{marginRight: '10px'}" activeColor="red" labelColor="#333"
+							label="石头 " :name="0"></u-radio>
+						<u-radio shape="square" :customStyle="{marginRight: '10px'}" activeColor="red" labelColor="#333"
+							label="剪刀 " :name="1"></u-radio>
+						<u-radio shape="square" :customStyle="{marginRight: '10px'}" activeColor="red" labelColor="#333"
+							label="布 " :name="2"></u-radio>
 					</u-radio-group>
 				</view>
 				<u-button type="success" @click="getMoney(redPackGame.oId)">抢</u-button>
@@ -182,7 +188,8 @@
 		getUserInfo,
 		deleteMsg,
 		getLiveness,
-		xiaoIceApi
+		xiaoIceApi,
+		report
 	} from '../../utils/api.js'
 	const recorderManager = uni.getRecorderManager();
 	const innerAudioContext = uni.createInnerAudioContext();
@@ -269,7 +276,7 @@
 				redPackGame: {
 					show: false,
 					oId: "",
-					gesture:0,
+					gesture: 0,
 				}
 			}
 		},
@@ -489,7 +496,7 @@
 						that.setContent(info.concat(that.content))
 						console.log("加载完毕")
 					}
-				}).catch(err=>{
+				}).catch(err => {
 					console.log(err)
 				})
 			},
@@ -512,9 +519,25 @@
 					this.SendMsg(this.longData.msg)
 				} else if (index == 1) {
 					this.deleteMessage(this.longData.oId)
-				} else {
+				} else if (index == 2) {
 					this.msg = `##### 引用 @${this.longData.userName} \n  > ${this.longData.msg} \n\n` + this.msg;
 					this.isSend = true;
+				} else {
+					report({
+						apiKey: this.apiKey,
+						reportDataId: this.longData.oId,
+						reportDataType: 3,
+						reportType: 49,
+						reportMemo: ""
+					}).then(res => {
+						if (res.code == 0) {
+							this.$refs.uToast.show({
+								type: 'success',
+								message: "一键举报成功，感谢你的帮助！",
+								iconUrl: 'https://cdn.uviewui.com/uview/demo/toast/success.png'
+							})
+						}
+					})
 				}
 			},
 			longpress(e) {
@@ -679,7 +702,7 @@
 						} else {
 							return false;
 						}
-			
+
 					} catch (e) {
 						return false;
 					}
@@ -1430,7 +1453,8 @@
 			padding-left: 5px;
 		}
 	}
-	.redPackGameBox{
+
+	.redPackGameBox {
 		display: flex;
 		justify-content: space-around;
 		align-items: center;

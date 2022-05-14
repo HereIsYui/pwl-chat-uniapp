@@ -124,6 +124,15 @@
             }
             
         }
+        ,{
+            "path" : "pages/tabbar/bbs/bbs_detail",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "详情",
+                "enablePullDownRefresh": false
+            }
+            
+        }
     ],
 	"tabBar": {
 		"selectedColor": "#000",

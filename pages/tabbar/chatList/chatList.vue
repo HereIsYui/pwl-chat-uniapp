@@ -256,12 +256,14 @@
 					this.content[this.content.length - 1].dbUser.push(msg)
 				} else if (this.isJSON(msg.content)) {
 					if (!this.isAppShow && this.setting.openAppPush) {
+						// #ifdef APP-PLUS
 						plus.push.createMessage(`收到红包，请在APP中查看！`);
 						plus.nativeUI.toast(`收到红包，请在APP中查看！`, {
 							verticalAlign: "top",
 							align: "center",
 							background: "#fff"
 						});
+						// #endif
 					}
 					msg.content = JSON.parse(msg.content)
 					msg.isMoney = true;

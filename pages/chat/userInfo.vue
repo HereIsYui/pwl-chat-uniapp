@@ -1,5 +1,6 @@
 <template>
 	<view class="userInfo-box">
+		<u-toast ref="uToast"></u-toast>
 		<view class="user-background">
 			<image :src="userInfo.cardBg" class="user-bg" mode="aspectFill"></image>
 			<image :src="userInfo.userAvatarURL" class="user-avatar" mode="aspectFill"></image>
@@ -34,8 +35,16 @@
 			<view class="user-cell user-sysMetal" v-if="userInfo.sysMetal">
 				<view class="user-cell-label">勋章：</view>
 				<template v-for="(item,index) in userInfo.sysMetal.list">
-					<image class="sysMetal" :src="'https://unv-shield.librian.net/api/unv_shield?scale=0.79&txt=' + item.name+'&' + item.attr" v-if="item.enabled" mode="heightFix"></image>
+					<image class="sysMetal"
+						:src="'https://unv-shield.librian.net/api/unv_shield?scale=0.79&txt=' + item.name+'&' + item.attr"
+						v-if="item.enabled" mode="heightFix"></image>
 				</template>
+			</view>
+			<!-- <view class="btn">
+				<u-button type="success" text="私信"></u-button>
+			</view> -->
+			<view class="btn">
+				<u-button type="warning" text="举报" @click="reportUser()"></u-button>
 			</view>
 		</view>
 	</view>
@@ -43,27 +52,48 @@
 
 <script>
 	import {
-		getUserInfo
+		getUserInfo,
+		report
 	} from '../../utils/api.js'
+	const App = getApp();
 	export default {
 		data() {
 			return {
-				user:"",
-				userInfo:{}
+				user: "",
+				apiKey:"",
+				userInfo: {}
 			}
 		},
-		onLoad(option){
+		onLoad(option) {
 			console.log(option)
+			this.apiKey = App.globalData.apiKey || uni.getStorageSync('apiKey');
 			this.user = option.user || "Yui";
 			uni.setNavigationBarTitle({
 				title: this.user + "的个人信息"
 			})
 			this.getInfo()
 		},
-		methods:{
-			getInfo(){
-				getUserInfo(this.user).then(res=>{
-					if(res.cardBg == ""){
+		methods: {
+			reportUser(){
+				report({
+					apiKey: this.apiKey,
+					reportDataId: this.userInfo.oId,
+					reportDataType: 2,
+					reportType: 49,
+					reportMemo: ""
+				}).then(res => {
+					if (res.code == 0) {
+						this.$refs.uToast.show({
+							type: 'success',
+							message: "一键举报成功，感谢你的帮助！",
+							iconUrl: 'https://cdn.uviewui.com/uview/demo/toast/success.png'
+						})
+					}
+				})
+			},
+			getInfo() {
+				getUserInfo(this.user).then(res => {
+					if (res.cardBg == "") {
 						res.cardBg = "https://pwl.stackoverflow.wiki/2021/11/32ceecb7798ea1fa-82bd6ec7.jpg"
 					}
 					// #ifdef H5
@@ -74,7 +104,7 @@
 					res.cardBg = "https://pwl.yuis.cc/GetImage?url=" + bg
 					res.userAvatarURL = "https://pwl.yuis.cc/GetImage?url=" + avatar
 					// #endif
-					if(res.sysMetal){
+					if (res.sysMetal) {
 						res.sysMetal = JSON.parse(res.sysMetal)
 					}
 					// url=https://pwl.stackoverflow.wiki/2021/12/metaldev-db507262.png&backcolor=483d8b&fontcolor=f8f8ff
@@ -88,11 +118,12 @@
 </script>
 
 <style scoped>
-	.user-background{
+	.user-background {
 		position: relative;
 		overflow: hidden;
 	}
-	.user-background::after{
+
+	.user-background::after {
 		content: "";
 		position: absolute;
 		z-index: 80;
@@ -100,10 +131,11 @@
 		right: 0;
 		width: 750px;
 		height: 100px;
-		background: rgba(255,255,255,.6);
+		background: rgba(255, 255, 255, .6);
 		transform: rotate(2deg) translateY(40px);
 	}
-	.user-background::before{
+
+	.user-background::before {
 		content: "";
 		position: absolute;
 		z-index: 90;
@@ -111,14 +143,16 @@
 		right: 0;
 		width: 750px;
 		height: 60px;
-		background: rgba(255,255,255,.8);
+		background: rgba(255, 255, 255, .8);
 		transform: rotate(-10deg) translateY(60px);
 	}
-	.user-bg{
+
+	.user-bg {
 		width: 100%;
 		height: 250px;
 	}
-	.user-avatar{
+
+	.user-avatar {
 		position: absolute;
 		right: 5vw;
 		bottom: 5vw;
@@ -126,7 +160,8 @@
 		width: 80px;
 		height: 80px;
 	}
-	.user-name{
+
+	.user-name {
 		position: absolute;
 		z-index: 100;
 		right: calc(5vw + 90px);
@@ -135,12 +170,14 @@
 		font-weight: bold;
 		bottom: 5vw;
 		padding: 5px 8px;
-		background: rgba(0,0,0,.1);
+		background: rgba(0, 0, 0, .1);
 	}
-	.user-detail-box{
+
+	.user-detail-box {
 		padding: 15px;
 	}
-	.user-cell{
+
+	.user-cell {
 		display: flex;
 		align-items: center;
 		height: 30px;
@@ -148,13 +185,19 @@
 		padding: 5px 15px;
 		color: #666;
 	}
-	.user-cell-label{
+
+	.user-cell-label {
 		width: 80px;
 	}
-	.user-cell:not(:last-child){
+
+	.user-cell:not(:last-child) {
 		border-bottom: 1px solid #f0f0f0;
 	}
-	.sysMetal{
+
+	.sysMetal {
 		height: 30px;
+	}
+	.btn{
+		margin-top: 10px;
 	}
 </style>
