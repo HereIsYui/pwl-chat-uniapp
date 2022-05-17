@@ -40,10 +40,10 @@
 						v-if="item.enabled" mode="heightFix"></image>
 				</template>
 			</view>
-			<!-- <view class="btn">
-				<u-button type="success" text="私信"></u-button>
-			</view> -->
-			<view class="btn">
+			<view class="btn" v-if="data.userName != user">
+				<u-button type="error" text="屏蔽" @click="shieldUser()"></u-button>
+			</view>
+			<view class="btn" v-if="data.userName != user">
 				<u-button type="warning" text="举报" @click="reportUser()"></u-button>
 			</view>
 		</view>
@@ -60,13 +60,15 @@
 		data() {
 			return {
 				user: "",
-				apiKey:"",
+				apiKey: "",
+				data: {},
 				userInfo: {}
 			}
 		},
 		onLoad(option) {
 			console.log(option)
 			this.apiKey = App.globalData.apiKey || uni.getStorageSync('apiKey');
+			this.data = App.globalData.data || uni.getStorageSync('userData');
 			this.user = option.user || "Yui";
 			uni.setNavigationBarTitle({
 				title: this.user + "的个人信息"
@@ -74,7 +76,22 @@
 			this.getInfo()
 		},
 		methods: {
-			reportUser(){
+			shieldUser() {
+				let shieldList = uni.getStorageSync("shieldList") || "[]";
+				shieldList = JSON.parse(shieldList);
+				if (shieldList) {
+					shieldList.push(this.user)
+				} else {
+					shieldList = [this.user]
+				}
+				uni.setStorageSync("shieldList", JSON.stringify(shieldList));
+				this.$refs.uToast.show({
+					type: 'success',
+					message: "加入黑名单成功！",
+					iconUrl: 'https://cdn.uviewui.com/uview/demo/toast/success.png'
+				})
+			},
+			reportUser() {
 				report({
 					apiKey: this.apiKey,
 					reportDataId: this.userInfo.oId,
@@ -197,7 +214,8 @@
 	.sysMetal {
 		height: 30px;
 	}
-	.btn{
+
+	.btn {
 		margin-top: 10px;
 	}
 </style>

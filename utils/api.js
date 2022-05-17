@@ -165,10 +165,7 @@ export const report = params => {
 	return UTIL.flirt({
 		url: API.report,
 		data: params,
-		method: "POST",
-		header: {
-			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
-		},
+		method: "POST"
 	})
 }
 

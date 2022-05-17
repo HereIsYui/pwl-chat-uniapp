@@ -31,7 +31,7 @@
 			</view>
 		</view>
 		<view class="cell-item flex">
-			<view class="cell-label">红包皮肤(VIP功能免费体验中):</view>
+			<view class="cell-label">红包皮肤:</view>
 		</view>
 		<view class="cell-item flex">
 			<view class="uni-list">
@@ -52,7 +52,7 @@
 			</view>
 		</view>
 		<view class="cell-item flex">
-			<view class="cell-label">主题样式:(VIP专属功能开发中)</view>
+			<view class="cell-label">主题样式:</view>
 		</view>
 		<view class="cell-item flex" v-if="canGetLiveness">
 			<view class="cell-btn btn-success" @click="getLiveness()">领取昨日活跃</view>
@@ -128,7 +128,7 @@
 				})
 			},
 			logout() {
-				uni.clearStorageSync();
+				uni.removeStorageSync('apiKey');
 				getApp().globalData.data = null;
 				getApp().globalData.apiKey = "";
 				uni.reLaunch({

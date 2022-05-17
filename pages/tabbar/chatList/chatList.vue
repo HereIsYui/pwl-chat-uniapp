@@ -67,13 +67,17 @@
 					userAvatarURL: "https://pwl.stackoverflow.wiki/2021/12/blob-3ff70c59.png",
 					userName: "xiaoIce",
 					userNickname: "小冰工作号"
-				}
+				},
+				shieldList: [],
 			}
 		},
 		onLoad() {
 			let apiKey = getApp().globalData.apiKey || uni.getStorageSync('apiKey');
 			this.apiKey = apiKey;
 			this.data = getApp().globalData.data || uni.getStorageSync('userData');
+			let shieldList = uni.getStorageSync("shieldList") || "[]";
+			shieldList = JSON.parse(shieldList);
+			this.shieldList = shieldList;
 			this.initChat();
 			this.getPage(1);
 			let setting = uni.getStorageSync('setting');
@@ -115,15 +119,20 @@
 				'setUserInfo'
 			]),
 			lastMsgInfo(msg, isXiaoIce) {
-				let rule = msg.content.replace(/<img\/?.+?>/g, "[图片]");
-				let rule2 = rule.replace(/<\/?.+?>/g, "");
-				let lastMsg = rule2.replace(/ /g, "");
-				if (isXiaoIce) {
-					this.xiaoIceLastMsg = `${msg.userName}:${lastMsg}`;
-					this.xiaoIceLastTime = this.fillterTime(msg.time);
-				} else {
-					this.lastMsg = `${msg.userName}:${lastMsg}`;
-					this.lastMsgTime = this.fillterTime(msg.time);
+				try {
+					let rule = msg.content.replace(/<img\/?.+?>/g, "[图片]");
+					let rule2 = rule.replace(/<\/?.+?>/g, "");
+					let lastMsg = rule2.replace(/ /g, "");
+					if (isXiaoIce) {
+						this.xiaoIceLastMsg = `${msg.userName}:${lastMsg}`;
+						this.xiaoIceLastTime = this.fillterTime(msg.time);
+					} else {
+						this.lastMsg = `${msg.userName}:${lastMsg}`;
+						this.lastMsgTime = this.fillterTime(msg.time);
+					}
+				} catch (e) {
+					//TODO handle the exception
+					console.log(e)
 				}
 			},
 			fillterTime(time) {
@@ -171,6 +180,9 @@
 						}
 						if (msg.userName == "xiaoIce") {
 							console.log(msg)
+						}
+						if (this.shieldList.includes(msg.userName)) {
+							return;
 						}
 						// #ifdef H5
 						let userAvatar = encodeURI(msg.userAvatarURL)
@@ -229,7 +241,11 @@
 								msg.content = JSON.parse(msg.content)
 								msg.isMoney = true;
 							}
-							this.filterMsg(msg)
+							if (this.shieldList.includes(msg.userName)) {
+								return;
+							} else {
+								this.filterMsg(msg)
+							}
 						})
 					}
 				})
@@ -274,13 +290,18 @@
 
 				} else if (/<img [^>]*src=['"]([^'"]+)[^>]*>/gi.test(msg.content)) {
 					// #ifdef H5
-					let newSrcList = [];
-					msg.content = msg.content.replace(/<img [^>]*src=['"]([^'"]+)[^>]*>/gi, function(match, capture) {
-						let url = encodeURI(capture);
-						url = btoa(url);
-						let imgUrl = `${ that.setting.ImageLoadHome + url}`;
-						return `<img src="${imgUrl}" alt="图片表情" />`
-					});
+					try {
+						let newSrcList = [];
+						msg.content = msg.content.replace(/<img [^>]*src=['"]([^'"]+)[^>]*>/gi, function(match, capture) {
+							let url = encodeURI(capture);
+							url = btoa(url);
+							let imgUrl = `${ that.setting.ImageLoadHome + url}`;
+							return `<img src="${imgUrl}" alt="图片表情" />`
+						});
+					} catch (e) {
+						//TODO handle the exception
+						console.log(e)
+					}
 					// #endif
 					this.content.push(msg);
 					this.upDateContent(msg);
@@ -329,7 +350,7 @@
 					if (res.sysMetal) {
 						res.sysMetal = JSON.parse(res.sysMetal)
 					}
-					this.setUserInfo(userInfo)
+					this.setUserInfo(res)
 				})
 			},
 		}

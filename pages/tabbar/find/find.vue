@@ -7,13 +7,15 @@
 			<view class="user-name" v-else>{{userInfo.userName}}</view>
 		</view>
 		<view class="bree-list-box" v-if="breeList">
-			<view class="bree-item" v-for="(item,index) in breeList" :key="index">
+			<view class="bree-item" v-for="(item,index) in breeList" :key="index"
+				v-if="!shieldList.includes(item.breezemoonAuthorName)">
 				<view class="bree-avatar" @click="toUserInfo(item.breezemoonAuthorName)">
 					<u-avatar shape="square" :src="item.breezemoonAuthorThumbnailURL48"></u-avatar>
 				</view>
 				<view class="bree-detail-box">
 					<view class="bree-username" @click="toUserInfo(item.breezemoonAuthorName)">
-						{{item.breezemoonAuthorName}}</view>
+						{{item.breezemoonAuthorName}}
+					</view>
 					<view class="bree-detail">
 						<u-parse :content="item.breezemoonContent"></u-parse>
 					</view>
@@ -35,6 +37,10 @@
 		getBree,
 		sendBree
 	} from '../../../utils/api.js'
+	import {
+		mapGetters,
+		mapMutations
+	} from 'vuex';
 	export default {
 		data() {
 			return {
@@ -43,12 +49,16 @@
 				breeList: [],
 				page: 1,
 				size: 20,
-				status: "loadmore"
+				status: "loadmore",
+				shieldList: [],
 			}
 		},
 		onLoad() {
 			this.userInfo = this.$store.state.userInfo;
 			this.data = getApp().globalData.data || uni.getStorageSync('userData');
+			let shieldList = uni.getStorageSync("shieldList") || "[]";
+			shieldList = JSON.parse(shieldList);
+			this.shieldList = shieldList;
 			this.getInfo();
 			this.getBreeList();
 		},
@@ -68,6 +78,7 @@
 			this.getBreeList();
 		},
 		methods: {
+			...mapMutations(['setUserInfo']),
 			getBreeList() {
 				let that = this;
 				getBree({
@@ -107,7 +118,7 @@
 						res.sysMetal = JSON.parse(res.sysMetal)
 					}
 					this.userInfo = res;
-					this.setUserInfo(userInfo)
+					this.setUserInfo(res)
 				})
 			},
 

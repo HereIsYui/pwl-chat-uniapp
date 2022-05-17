@@ -5,7 +5,8 @@
 			<u-tabs :list="list" @click="tabsClick" :scrollable="false" lineColor="#60b044"></u-tabs>
 		</u-sticky>
 		<scroll-view scroll-y class="article_list" lower-threshold="100" @scrolltolower="loadPage()">
-			<view class="card" v-for="(item,index) in articlesList" :key="item.oId" @click="toDetail(item.oId)">
+			<view class="card" v-for="(item,index) in articlesList" :key="item.oId" @click="toDetail(item.oId)"
+				v-if="!shieldList.includes(item.articleAuthorName)">
 				<view class="card_title">
 					{{item.articleTitle}}
 					<u-icon v-if="item.articleStick" color="#000" name="pushpin-fill"></u-icon>
@@ -69,11 +70,15 @@
 				}],
 				articlesList: [],
 				current: 0,
+				shieldList: [],
 			}
 		},
 		onLoad() {
 			this.apiKey = App.globalData.apiKey || uni.getStorageSync('apiKey');
 			this.GetArticlesList()
+			let shieldList = uni.getStorageSync("shieldList") || "[]";
+			shieldList = JSON.parse(shieldList);
+			this.shieldList = shieldList;
 		},
 		methods: {
 			GetArticlesList() {
@@ -209,6 +214,7 @@
 			padding: 0 15px;
 			box-sizing: border-box;
 			height: calc(100vh - 45px);
+
 			.card {
 				margin: 10px 0;
 				padding: 10px;

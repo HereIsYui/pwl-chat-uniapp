@@ -133,6 +133,15 @@
             }
             
         }
+        ,{
+            "path" : "pages/tabbar/user/shield",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "黑名单",
+                "enablePullDownRefresh": false
+            }
+            
+        }
     ],
 	"tabBar": {
 		"selectedColor": "#000",
