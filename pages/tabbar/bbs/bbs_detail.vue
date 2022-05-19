@@ -8,7 +8,7 @@
 		<view class="card_header" v-if="!loading">
 			<view class="article_auator_box">
 				<u--image width="40" height="40" :src="article.articleAuthorThumbnailURL210" shape="square" radius="5"
-					:fade="true" duration="200"></u--image>
+					:fade="true" duration="200" @click="toUser(article.articleAuthorName)"></u--image>
 				<view class="article_info_box">
 					<view class="article_info">
 						{{article.articleAuthorName}}
@@ -46,7 +46,7 @@
 			<view class="comments_item" v-for="item in article.articleComments" :key="item.oId">
 				<view class="comments_user">
 					<u--image width="25" height="25" :src="item.commentAuthorThumbnailURL" shape="circle" :fade="true"
-						duration="200"></u--image>
+						duration="200" @click="toUser(item.commentAuthorName)"></u--image>
 					<view style="margin-left: 10px;">{{item.commentAuthorName}}</view>
 					<view style="">●</view>
 					<view>{{item.timeAgo}}</view>
@@ -88,6 +88,13 @@
 			this.GetArticlesDetail()
 		},
 		methods: {
+			toUser(userName) {
+				uni.navigateTo({
+					url: "../../chat/userInfo?user=" + userName,
+					animationType: 'pop-in',
+					animationDuration: 200
+				})
+			},
 			GetArticlesDetail() {
 				articlesDetail({
 					oId: this.oId,
