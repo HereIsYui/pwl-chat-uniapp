@@ -8,7 +8,7 @@
 		<view class="card_header" v-if="!loading">
 			<view class="article_auator_box">
 				<u--image width="40" height="40" :src="article.articleAuthorThumbnailURL210" shape="square" radius="5"
-					:fade="true" duration="200" @click="toUser(article.articleAuthorName)"></u--image>
+					:fade="true" duration="200" @click="toUser(article.articleAuthorName,2)"></u--image>
 				<view class="article_info_box">
 					<view class="article_info">
 						{{article.articleAuthorName}}
@@ -37,16 +37,17 @@
 			</view>
 		</view>
 		<view class="article_detail" v-if="!loading">
-			<mp-html :copy-link="false" :content="article.articleContent" :show-img-menu="false" :tag-style="htmlStyle" />
+			<mp-html :copy-link="false" :content="article.articleContent" :show-img-menu="false"
+				:tag-style="htmlStyle" />
 		</view>
 		<view class="comments_list" v-if="!loading">
 			<view class="comments_title">
 				回帖:{{article.articleComments.length}}
 			</view>
-			<view class="comments_item" v-for="item in article.articleComments" :key="item.oId">
+			<view class="comments_item" v-for="item in article.articleComments" :key="item.oId" v-if="!shieldList.includes(item.commentAuthorName)">
 				<view class="comments_user">
 					<u--image width="25" height="25" :src="item.commentAuthorThumbnailURL" shape="circle" :fade="true"
-						duration="200" @click="toUser(item.commentAuthorName)"></u--image>
+						duration="200" @click="toUser(item.commentAuthorName,article.articleAuthorName == item.commentAuthorName ? 2 : 1)"></u--image>
 					<view style="margin-left: 10px;">{{item.commentAuthorName}}</view>
 					<view style="">●</view>
 					<view>{{item.timeAgo}}</view>
@@ -79,7 +80,8 @@
 				loading: true,
 				htmlStyle: {
 					h3: "margin:10px 0"
-				}
+				},
+				shieldList: [],
 			}
 		},
 		onLoad(option) {
@@ -87,10 +89,15 @@
 			this.apiKey = App.globalData.apiKey || uni.getStorageSync('apiKey');
 			this.GetArticlesDetail()
 		},
+		onShow(){
+			let shieldList = uni.getStorageSync("shieldList") || "[]";
+			shieldList = JSON.parse(shieldList);
+			this.shieldList = shieldList;
+		},
 		methods: {
-			toUser(userName) {
+			toUser(userName, type) {
 				uni.navigateTo({
-					url: "../../chat/userInfo?user=" + userName,
+					url: "../../chat/userInfo?BBSType=" + type + "&user=" + userName,
 					animationType: 'pop-in',
 					animationDuration: 200
 				})
@@ -171,7 +178,7 @@
 		}
 
 		.comments_list {
-			
+
 			.comments_title {
 				padding: 10px;
 				margin: 0 -15px;
@@ -183,6 +190,7 @@
 			.comments_item {
 				padding: 10px 0;
 				border-bottom: 1px solid #f0f0f0;
+
 				.comments_user {
 					display: flex;
 					justify-content: flex-start;
@@ -196,7 +204,8 @@
 				}
 
 			}
-			.comments_inner{
+
+			.comments_inner {
 				padding: 10px 0;
 				min-height: 60px;
 			}

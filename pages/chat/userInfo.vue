@@ -62,7 +62,8 @@
 				user: "",
 				apiKey: "",
 				data: {},
-				userInfo: {}
+				userInfo: {},
+				BBSType: 0
 			}
 		},
 		onLoad(option) {
@@ -70,6 +71,7 @@
 			this.apiKey = App.globalData.apiKey || uni.getStorageSync('apiKey');
 			this.data = App.globalData.data || uni.getStorageSync('userData');
 			this.user = option.user || "Yui";
+			this.BBSType = option.BBSType || 0;
 			uni.setNavigationBarTitle({
 				title: this.user + "的个人信息"
 			})
@@ -90,6 +92,11 @@
 					message: "加入黑名单成功！",
 					iconUrl: 'https://cdn.uviewui.com/uview/demo/toast/success.png'
 				})
+				if(this.BBSType != 0){
+					uni.navigateBack({
+						delta: parseInt(this.BBSType)
+					})
+				}
 			},
 			reportUser() {
 				report({

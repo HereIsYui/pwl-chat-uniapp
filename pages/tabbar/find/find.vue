@@ -62,6 +62,11 @@
 			this.getInfo();
 			this.getBreeList();
 		},
+		onShow(){
+			let shieldList = uni.getStorageSync("shieldList") || "[]";
+			shieldList = JSON.parse(shieldList);
+			this.shieldList = shieldList;
+		},
 		onNavigationBarButtonTap(obj) {
 			console.log(obj)
 			if (obj.type == "none") {

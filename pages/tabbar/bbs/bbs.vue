@@ -80,6 +80,12 @@
 			shieldList = JSON.parse(shieldList);
 			this.shieldList = shieldList;
 		},
+		onShow() {
+			let shieldList = uni.getStorageSync("shieldList") || "[]";
+			shieldList = JSON.parse(shieldList);
+			this.shieldList = shieldList;
+			this.tabsClick({index:0})
+		},
 		methods: {
 			GetArticlesList() {
 				articlesList({
