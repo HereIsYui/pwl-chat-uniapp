@@ -84,7 +84,6 @@
 			let shieldList = uni.getStorageSync("shieldList") || "[]";
 			shieldList = JSON.parse(shieldList);
 			this.shieldList = shieldList;
-			this.tabsClick({index:0})
 		},
 		methods: {
 			GetArticlesList() {
@@ -113,7 +112,7 @@
 				}).then(res => {
 					console.log(res)
 					if (res.code == 0) {
-						this.articlesList += res.data.articles;
+						this.articlesList = this.articlesList.concat(res.data.articles);
 					} else {
 						this.$refs.uToast.show({
 							type: 'error',
@@ -131,7 +130,7 @@
 				}).then(res => {
 					console.log(res)
 					if (res.code == 0) {
-						this.articlesList += res.data.articles;
+						this.articlesList = this.articlesList.concat(res.data.articles);
 					} else {
 						this.$refs.uToast.show({
 							type: 'error',
@@ -149,7 +148,7 @@
 				}).then(res => {
 					console.log(res)
 					if (res.code == 0) {
-						this.articlesList += res.data.articles;
+						this.articlesList = this.articlesList.concat(res.data.articles);
 					} else {
 						this.$refs.uToast.show({
 							type: 'error',
