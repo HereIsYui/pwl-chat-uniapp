@@ -390,6 +390,7 @@
 			'$store.state.content'(newVal, oldVal) {
 				//对数据进行操作
 				this.content = newVal;
+				this.scrollToBottom()
 			},
 			'$store.state.firstMsg'(newVal, oldVal) {
 				//对数据进行操作
